@@ -1,0 +1,146 @@
+if (game:IsLoaded() == false) then
+	game.Loaded:Wait()
+end
+
+local plrs = game:GetService("Players")
+local connections = {}
+
+for _,anti in pairs(plrs:GetPlayers()) do
+	if anti ~= plrs.LocalPlayer then
+		connections[anti.Name] = {}
+		if workspace:FindFirstChild(anti.Name) then
+			connections[anti.Name]["connection01"] = game:GetService("RunService").Heartbeat:Connect(function()
+				for _,non in pairs(anti.Character:GetDescendants()) do
+					if non:IsA("BasePart") then
+						non.CanCollide = false
+					end
+				end
+			end)
+			connections[anti.Name]["connection02"] = game:GetService("RunService").Stepped:Connect(function()
+				for _,non in pairs(anti.Character:GetDescendants()) do
+					if non:IsA("BasePart") then
+						non.CanCollide = false
+					end
+				end
+			end)
+			connections[anti.Name]["connection03"] = game:GetService("RunService").RenderStepped:Connect(function()
+				for _,non in pairs(anti.Character:GetDescendants()) do
+					if non:IsA("BasePart") then
+						non.CanCollide = false
+					end
+				end
+			end)
+		end
+		
+		anti.CharacterAdded:Connect(function(br)
+			connections[anti.Name]["connection01"] = game:GetService("RunService").Heartbeat:Connect(function()
+				for _,non in pairs(br:GetDescendants()) do
+					if non:IsA("BasePart") then
+						non.CanCollide = false
+					end
+				end
+			end)
+			connections[anti.Name]["connection02"] = game:GetService("RunService").Stepped:Connect(function()
+				for _,non in pairs(br:GetDescendants()) do
+					if non:IsA("BasePart") then
+						non.CanCollide = false
+					end
+				end
+			end)
+			connections[anti.Name]["connection03"] = game:GetService("RunService").RenderStepped:Connect(function()
+				for _,non in pairs(br:GetDescendants()) do
+					if non:IsA("BasePart") then
+						non.CanCollide = false
+					end
+				end
+			end)
+		end)
+		
+		anti.CharacterRemoving:Connect(function()
+			for _,dis in pairs(connections[anti.Name]) do
+				dis:Disconnect()
+			end
+		end)
+	end
+end
+
+plrs.PlayerAdded:Connect(function(anti)
+	connections[anti.Name] = {}
+	if workspace:FindFirstChild(anti.Name) then
+		connections[anti.Name]["connection01"] = game:GetService("RunService").Heartbeat:Connect(function()
+			for _,non in pairs(anti.Character:GetDescendants()) do
+				if non:IsA("BasePart") then
+					non.CanCollide = false
+				end
+			end
+		end)
+		connections[anti.Name]["connection02"] = game:GetService("RunService").Stepped:Connect(function()
+			for _,non in pairs(anti.Character:GetDescendants()) do
+				if non:IsA("BasePart") then
+					non.CanCollide = false
+				end
+			end
+		end)
+		connections[anti.Name]["connection03"] = game:GetService("RunService").RenderStepped:Connect(function()
+			for _,non in pairs(anti.Character:GetDescendants()) do
+				if non:IsA("BasePart") then
+					non.CanCollide = false
+				end
+			end
+		end)
+	end
+	
+	anti.CharacterAdded:Connect(function(br)
+		connections[anti.Name]["connection01"] = game:GetService("RunService").Heartbeat:Connect(function()
+			for _,non in pairs(br:GetDescendants()) do
+				if non:IsA("BasePart") then
+					non.CanCollide = false
+				end
+			end
+		end)
+		connections[anti.Name]["connection02"] = game:GetService("RunService").Stepped:Connect(function()
+			for _,non in pairs(br:GetDescendants()) do
+				if non:IsA("BasePart") then
+					non.CanCollide = false
+				end
+			end
+		end)
+		connections[anti.Name]["connection03"] = game:GetService("RunService").RenderStepped:Connect(function()
+			for _,non in pairs(br:GetDescendants()) do
+				if non:IsA("BasePart") then
+					non.CanCollide = false
+				end
+			end
+		end)
+	end)
+	
+	anti.CharacterRemoving:Connect(function()
+		for _,dis in pairs(connections[anti.Name]) do
+			dis:Disconnect()
+		end
+	end)
+end)
+
+plrs.PlayerRemoving:Connect(function(anti)
+	if table.find(connections, anti.Name) then
+		table.remove(connections, table.find(connections, anti.Name))
+	end
+end)
+
+for _,h in pairs(workspace:GetChildren()) do
+	if h:IsA("Accessory") then
+		repeat
+			game:GetService("RunService").Stepped:Wait()
+			h:FindFirstChild("Handle").CanCollide = false
+		until (h:FindFirstChild("Handle") == nil)
+	end
+end
+
+workspace.ChildAdded:Connect(function(h)
+	if h:IsA("Accessory") then
+		repeat
+			game:GetService("RunService").Stepped:Wait()
+			h:FindFirstChild("Handle").CanCollide = false
+		until (h:FindFirstChild("Handle") == nil)
+	end
+end)
